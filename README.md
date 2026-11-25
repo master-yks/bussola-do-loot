@@ -19,9 +19,9 @@
 
 ## Planejar uma rota
 
-Abra **Mapa → Planejar rota**, escolha **Sugerir percurso de baús** e clique no ponto de pouso. O app procura até oito paradas nas camadas de baús ativas em um raio de 180 metros. Você pode arrastar uma parada, salvar a rota e exportar a vista em PNG. O mapa da temporada Caçadores de Tesouro vem no aplicativo.
+Abra **Mapa → Planejar rota**, escolha **Sugerir percurso de baús** e clique no ponto de pouso. Escolha um raio de 100, 180 ou 300 m. O planejador prioriza trechos que alcançam mais baús novos por metro. Arraste os pontos ou reordene as paradas pela lista, salve a rota e exporte a vista em PNG. O mapa da temporada Caçadores de Tesouro vem no aplicativo.
 
-![Mapa de Crossbones Isle com um percurso de exemplo e a lista de paradas](docs/imagens/mapa-rota.png)
+![Mapa de Crossbones Isle com um percurso de exemplo e o resumo de baús](docs/imagens/mapa-rota.png)
 
 ## Mostrar o contador na transmissão
 
@@ -52,7 +52,7 @@ Instale o **SDK .NET 10 x64** e abra o PowerShell na raiz deste repositório. A 
 .\scripts\Publicar-Windows.ps1
 ```
 
-O script executa as verificações de contagem, compila a interface e a CLI e grava o ZIP autossuficiente em `artifacts\`. Para rodar apenas os testes, use `dotnet run --project tests/ChestCounter.Checks -c Release`. A versão distribuída e testada para jogadores é a de .NET. O código alternativo em Rust fica em `rust/` para desenvolvimento e usa um histórico próprio. Neste ambiente, a variante gráfica em Rust compilou com a toolchain GNU, mas encerrou durante a inicialização.
+O script verifica a contagem e as rotas, compila a interface e a CLI e grava o ZIP autossuficiente em `artifacts\`. Para verificar contagem e rotas, execute `dotnet run --project tests/ChestCounter.Checks -c Release` e `dotnet run --project tests/ChestCounter.MapChecks -c Release`. A versão distribuída e testada para jogadores é a de .NET. O código alternativo em Rust fica em `rust/` para desenvolvimento e usa um histórico próprio. Neste ambiente, a variante gráfica em Rust compilou com a toolchain GNU, mas encerrou durante a inicialização.
 
 Consulte o passo a passo de exportação, as famílias de baús e as probabilidades no [manual do aplicativo](docs/MANUAL.md).
 

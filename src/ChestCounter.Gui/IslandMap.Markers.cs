@@ -130,47 +130,50 @@ public sealed partial class IslandMap
         SpotInspected?.Invoke(marker.Spots[0], marker.Spots.Length > 1 ? MarkerDescription(marker) : _regions[marker.Spots[0]].Name);
     }
 
-    internal int SuggestStops(Point origin, int limit)
+    internal int SuggestStops(Point origin, int limit, double searchMeters = 180)
     {
-        const double searchMeters = 180;
-        double r = searchMeters / Data.WidthMeters;
-        var candidates = InBounds(new Rect(origin.X - r, origin.Y - r, 2 * r, 2 * r))
-            .Where(s => s.Layer.Chest && VisibleLayers.Contains(s.Layer.Id) && (s.Position - origin).Length <= r)
-            .Select(s => s.Position).Distinct().OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
-        if (candidates.Count == 0) return 0;
-        double minSpacing = 3 / Data.WidthMeters;
-        var stops = new List<Point> { origin };
-        candidates.RemoveAll(p => _route.Any(old => (p - old).Length < minSpacing));
-        while (stops.Count <= limit && candidates.Count > 0)
+        double range = searchMeters / Data.WidthMeters;
+        double reach = _radius / Data.WidthMeters;
+        double reachSquared = reach * reach;
+        var bounds = new Rect(origin.X - range, origin.Y - range, 2 * range, 2 * range);
+        var remaining = InBounds(bounds)
+            .Where(s => s.Layer.Chest && VisibleLayers.Contains(s.Layer.Id) && !_near.Contains(s)
+                && (s.Position - origin).LengthSquared <= range * range)
+            .Select(s => s.Position).OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
+        if (remaining.Count == 0 || limit < 1) return 0;
+
+        var additions = new List<Point>();
+        if (_route.Count == 0) additions.Add(origin);
+        remaining.RemoveAll(p => (p - origin).LengthSquared <= reachSquared);
+        var current = origin;
+        double distanceLeft = 2 * range;
+        for (int leg = 0; leg < limit && remaining.Count > 0; leg++)
         {
-            var next = candidates.MinBy(p => (stops[^1] - p).LengthSquared);
-            candidates.RemoveAll(p => (p - next).Length < minSpacing);
-            if ((next - stops[^1]).Length >= minSpacing) stops.Add(next);
+            // A leg earns credit for every new spawn inside its collection corridor.
+            // The radius in the denominator also avoids favouring tiny hops within clusters.
+            Point best = current;
+            double bestScore = -1;
+            foreach (var target in remaining.Distinct())
+            {
+                double legLength = (target - current).Length;
+                if (legLength > distanceLeft) continue;
+                int gain = remaining.Count(p => DistanceSquared(p, current, target) <= reachSquared);
+                double score = gain / (legLength + reach);
+                if (score <= bestScore) continue;
+                best = target;
+                bestScore = score;
+            }
+            if (bestScore < 0) break;
+            distanceLeft -= (best - current).Length;
+            additions.Add(best);
+            remaining.RemoveAll(p => DistanceSquared(p, current, best) <= reachSquared);
+            current = best;
         }
-        if (stops.Count == 1 && _route.Count > 0) return 0;
-        // Shorten crossing legs while keeping the chosen origin fixed (open-path 2-opt).
-        bool improved;
-        do
+        if (additions.Count > 0)
         {
-            improved = false;
-            for (int i = 1; i < stops.Count - 1; i++)
-                for (int j = i + 1; j < stops.Count; j++)
-                {
-                    double before = (stops[i - 1] - stops[i]).Length;
-                    double after = (stops[i - 1] - stops[j]).Length;
-                    if (j + 1 < stops.Count)
-                    {
-                        before += (stops[j] - stops[j + 1]).Length;
-                        after += (stops[i] - stops[j + 1]).Length;
-                    }
-                    if (after + 1e-9 >= before) continue;
-                    stops.Reverse(i, j - i + 1);
-                    improved = true;
-                }
-        } while (improved);
-        bool extend = _route.Count > 0;
-        ReplaceRoute(_route.Concat(stops.Skip(extend ? 1 : 0)).ToArray());
-        FitRoute();
-        return stops.Count - (extend ? 1 : 0);
+            ReplaceRoute(_route.Concat(additions).ToArray());
+            FitRoute();
+        }
+        return additions.Count;
     }
 }

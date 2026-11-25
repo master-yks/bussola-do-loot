@@ -13,6 +13,9 @@ try {
     & dotnet run --project tests/ChestCounter.Checks -c Release
     if ($LASTEXITCODE -ne 0) { throw 'As verificações de contagem falharam.' }
 
+    & dotnet run --project tests/ChestCounter.MapChecks -c Release
+    if ($LASTEXITCODE -ne 0) { throw 'As verificações de rotas falharam.' }
+
     [void](New-Item -ItemType Directory -Path $output)
     foreach ($app in 'Gui', 'Live') {
         & dotnet publish "src/ChestCounter.$app" --artifacts-path $build -c Release -r win-x64 --self-contained true -o $output -p:DebugType=None -p:DebugSymbols=false

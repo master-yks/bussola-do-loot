@@ -48,7 +48,7 @@ public sealed partial class IslandMap : FrameworkElement
     {
         ClipToBounds = true;
         Focusable = true;
-        using var json = Application.GetResourceStream(new Uri("Assets/Island/island.json", UriKind.Relative)).Stream;
+        using var json = Application.GetResourceStream(new Uri("/BussolaDoLoot;component/Assets/Island/island.json", UriKind.Relative)).Stream;
         Data = JsonSerializer.Deserialize<IslandData>(json)!;
         _image = ReadImage("crossbones.png");
         _ortho = ReadImage("Ortho/overview.jpg");
@@ -69,7 +69,7 @@ public sealed partial class IslandMap : FrameworkElement
 
     private static BitmapSource ReadImage(string file)
     {
-        using var stream = Application.GetResourceStream(new Uri("Assets/Island/" + file, UriKind.Relative)).Stream;
+        using var stream = Application.GetResourceStream(new Uri("/BussolaDoLoot;component/Assets/Island/" + file, UriKind.Relative)).Stream;
         var bitmap = new BitmapImage();
         bitmap.BeginInit();
         bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -175,7 +175,7 @@ public sealed partial class IslandMap : FrameworkElement
         double t = ab.LengthSquared == 0 ? 0 : Math.Clamp(Vector.Multiply(p - a, ab) / ab.LengthSquared, 0, 1);
         return (p - (a + ab * t)).LengthSquared;
     }
-    private void MeasureRoute()
+    internal void MeasureRoute()
     {
         _near.Clear();
         LengthMeters = 0;
@@ -188,7 +188,7 @@ public sealed partial class IslandMap : FrameworkElement
             var bounds = new Rect(a, b);
             bounds.Inflate(radius, radius);
             foreach (var spot in InBounds(bounds))
-                if (spot.Layer.Chest && DistanceSquared(spot.Position, a, b) <= radius * radius)
+                if (spot.Layer.Chest && VisibleLayers.Contains(spot.Layer.Id) && DistanceSquared(spot.Position, a, b) <= radius * radius)
                     _near.Add(spot);
         }
         RouteChanged?.Invoke();
@@ -302,12 +302,15 @@ public sealed partial class IslandMap : FrameworkElement
         ReleaseMouseCapture();
         if (!_dragged && PickingOrigin && new Rect(0, 0, 1, 1).Contains(p))
         {
-            OriginPicked?.Invoke(HitMarker(e.GetPosition(this))?.World ?? p);
+            OriginPicked?.Invoke(HitMarker(e.GetPosition(this)) is { Region: null, Spots.Length: 1 } marker
+                ? marker.Spots[0].Position : p);
         }
         else if (!_dragged && !Editing && !PickingOrigin) Inspect(e.GetPosition(this));
         else if (Editing && !_dragged && _handle < 0 && new Rect(0, 0, 1, 1).Contains(p))
         {
             Remember();
+            if (HitMarker(e.GetPosition(this)) is { Region: null, Spots.Length: 1 } marker)
+                p = marker.Spots[0].Position;
             int index = _route.Count;
             if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && index >= 2)
                 index = Enumerable.Range(1, index - 1).MinBy(i => DistanceSquared(p, _route[i - 1], _route[i]));
@@ -323,6 +326,19 @@ public sealed partial class IslandMap : FrameworkElement
     }
     protected override void OnKeyDown(KeyEventArgs e)
     {
-        if (e.Key == Key.Z && Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) { Undo(); e.Handled = true; }
+        switch (e.Key)
+        {
+            case Key.Z when Keyboard.Modifiers.HasFlag(ModifierKeys.Control): Undo(); break;
+            case Key.Add or Key.OemPlus: Zoom(1.5); break;
+            case Key.Subtract or Key.OemMinus: Zoom(1 / 1.5); break;
+            case Key.Home: ResetView(); break;
+            case Key.Left:  _center = Clamp(_center + new Vector(-64 / Scale, 0)); break;
+            case Key.Right: _center = Clamp(_center + new Vector(64 / Scale, 0)); break;
+            case Key.Up:    _center = Clamp(_center + new Vector(0, -64 / Scale)); break;
+            case Key.Down:  _center = Clamp(_center + new Vector(0, 64 / Scale)); break;
+            default: base.OnKeyDown(e); return;
+        }
+        InvalidateVisual();
+        e.Handled = true;
     }
 }

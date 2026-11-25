@@ -14,15 +14,15 @@ namespace ChestCounter.Gui;
 public partial class IslandPlanner : UserControl
 {
     private sealed record Stop(double X, double Y);
-    private sealed record SavedRoute(string Name, double Radius, Stop[] Stops);
+    private sealed record SavedRoute(string Name, double Radius, Stop[] Stops, string[]? ChestLayers = null);
     private readonly string _folder;
 
     public IslandPlanner() : this(true) { }
 
-    internal IslandPlanner(bool loadSavedRoutes)
+    internal IslandPlanner(bool loadSavedRoutes, string? routeFolder = null)
     {
         InitializeComponent();
-        _folder = Path.Combine(Path.GetDirectoryName(AppConfig.Path)!, "rotas", "crossbones-" + Map.Data.Version);
+        _folder = routeFolder ?? Path.Combine(Path.GetDirectoryName(AppConfig.Path)!, "rotas", "crossbones-" + Map.Data.Version);
         Places.ItemsSource = Map.Data.Places.OrderBy(p => p.Name);
         BuildLayers();
         Map.SpotInspected += (spot, detail) =>
@@ -95,7 +95,7 @@ public partial class IslandPlanner : UserControl
         int count = Map.Data.Layers.Where(l => Map.VisibleLayers.Contains(l.Id)).Sum(l => l.Points.Length);
         LayerSummary.Text = $"{Map.VisibleLayers.Count} de {Map.Data.Layers.Length} camadas  ·  {count:N0} pontos";
         InfoCard.Visibility = Visibility.Collapsed;
-        Map.InvalidateVisual();
+        Map.MeasureRoute();
     }
     private void Preset(object sender, RoutedEventArgs e)
     {
@@ -174,9 +174,14 @@ public partial class IslandPlanner : UserControl
     private void Generate(Point start)
     {
         CancelPicking();
-        int count = Map.SuggestStops(start, 8);
-        RouteStatus.Text = count == 0 ? "Nenhum novo baú ativo em até 180 m. Escolha outro local ou mude as camadas."
-            : count == 1 ? "1 parada adicionada." : $"{count} paradas adicionadas.";
+        var (limit, meters) = ShortRoute.IsChecked == true ? (4, 100)
+            : LongRoute.IsChecked == true ? (12, 300) : (8, 180);
+        int before = Map.Nearby.Count;
+        int count = Map.SuggestStops(start, limit, meters);
+        int gain = Map.Nearby.Count - before;
+        RouteStatus.Text = count == 0
+            ? $"Nenhum baú novo em até {meters} m. Mude o alcance da busca ou as camadas."
+            : $"Trecho adicionado · +{gain} {(gain == 1 ? "baú possível" : "baús possíveis")}";
     }
     private void CloseInfo(object sender, RoutedEventArgs e) => InfoCard.Visibility = Visibility.Collapsed;
     private void FitStops(object sender, RoutedEventArgs e) => Map.FitRoute();
@@ -238,7 +243,27 @@ public partial class IslandPlanner : UserControl
                 HorizontalContentAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 1, 0, 1),
                 ToolTip = $"Centralizar na parada {i + 1}" };
             button.Click += (_, _) => Map.FocusStop(p);
-            StopList.Children.Add(button);
+            var row = new DockPanel();
+            int index = i;
+            foreach (int offset in new[] { 1, -1 })
+            {
+                int next = index + offset;
+                string action = offset < 0 ? "Antecipar" : "Adiar";
+                var move = new Button { Content = offset < 0 ? "↑" : "↓", Style = (Style)FindResource("Quiet"),
+                    Width = 26, Padding = new Thickness(0), Margin = new Thickness(2, 1, 0, 1),
+                    IsEnabled = next >= 0 && next < Map.Route.Count, ToolTip = $"{action} parada {index + 1}" };
+                AutomationProperties.SetName(move, (string)move.ToolTip);
+                move.Click += (_, _) =>
+                {
+                    var stops = Map.Route.ToArray();
+                    (stops[index], stops[next]) = (stops[next], stops[index]);
+                    Map.ReplaceRoute(stops);
+                };
+                DockPanel.SetDock(move, Dock.Right);
+                row.Children.Add(move);
+            }
+            row.Children.Add(button);
+            StopList.Children.Add(row);
         }
     }
     private void Export(object sender, RoutedEventArgs e)
@@ -293,7 +318,8 @@ public partial class IslandPlanner : UserControl
     private void Save(object sender, RoutedEventArgs e)
     {
         string name = RouteName.Text.Trim();
-        var route = new SavedRoute(name, Radius.Value, Map.Route.Select(p => new Stop(p.X, p.Y)).ToArray());
+        var route = new SavedRoute(name, Radius.Value, Map.Route.Select(p => new Stop(p.X, p.Y)).ToArray(),
+            Map.Data.Layers.Where(l => l.Chest && Map.VisibleLayers.Contains(l.Id)).Select(l => l.Id).ToArray());
         string key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(name.ToUpperInvariant())));
         string temp = Path.Combine(_folder, Guid.NewGuid().ToString("N") + ".tmp");
         try
@@ -315,6 +341,14 @@ public partial class IslandPlanner : UserControl
         if (Saved.SelectedItem is not SavedRoute route) return;
         CancelPicking();
         RouteName.Text = route.Name;
+        foreach (var layer in Map.Data.Layers.Where(l => l.Chest))
+        {
+            bool active = route.ChestLayers?.Contains(layer.Id) ?? true;
+            if (active) Map.VisibleLayers.Add(layer.Id);
+            else Map.VisibleLayers.Remove(layer.Id);
+            _toggles[layer.Id].IsChecked = active;
+        }
+        RefreshLayers();
         Radius.Value = route.Radius;
         Map.ReplaceRoute(route.Stops.Select(p => new Point(p.X, p.Y)));
         Map.FitRoute();

@@ -94,7 +94,7 @@
                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="8">
                     <Button Content="−" AutomationProperties.Name="Reduzir zoom" Click="ZoomOut" Style="{StaticResource Quiet}" Width="32" Padding="2,0"/>
                     <Button Content="+" AutomationProperties.Name="Ampliar mapa" Click="ZoomIn" Style="{StaticResource Quiet}" Width="32" Padding="2,0" Margin="3,0,5,0"/>
-                    <Button Content="Ilha inteira" Click="Fit" Style="{StaticResource Quiet}"/>
+                    <Button Content="Ilha inteira" ToolTip="Home volta à ilha. Com o mapa em foco, use as setas para navegar e + ou − para ampliar ou reduzir." Click="Fit" Style="{StaticResource Quiet}"/>
                 </StackPanel>
                 <Border Grid.Row="2" Background="{StaticResource Card}" Padding="10,5">
                     <DockPanel><TextBlock x:Name="MapMode" DockPanel.Dock="Left" Foreground="{StaticResource Gem}" FontWeight="SemiBold" FontSize="11" Margin="0,0,10,0"/>
@@ -137,11 +137,17 @@
                             </Border>
                             <CheckBox x:Name="Edit" Content="Editar paradas no mapa" IsChecked="True" Checked="EditChanged" Unchecked="EditChanged"/>
                             <TextBlock Text="Clique para marcar e arraste para mover. Shift + clique insere uma parada. Botão direito remove." TextWrapping="Wrap" Style="{StaticResource Label}" Margin="0,4,0,9" FontSize="11"/>
+                            <TextBlock Text="Alcance da busca" Style="{StaticResource Label}" Margin="0,1,0,4"/>
+                            <UniformGrid Columns="3" Margin="0,0,0,7">
+                                <RadioButton x:Name="ShortRoute" GroupName="range" Content="100 m" Style="{StaticResource Pill}" ToolTip="Até 4 destinos e 200 m de percurso"/>
+                                <RadioButton GroupName="range" Content="180 m" IsChecked="True" Style="{StaticResource Pill}" ToolTip="Até 8 destinos e 360 m de percurso"/>
+                                <RadioButton x:Name="LongRoute" GroupName="range" Content="300 m" Style="{StaticResource Pill}" ToolTip="Até 12 destinos e 600 m de percurso"/>
+                            </UniformGrid>
                             <Button x:Name="SuggestButton" Content="Sugerir percurso de baús" Click="Suggest" Style="{StaticResource Primary}"/>
-                            <TextBlock Text="Até 8 baús das camadas ativas a 180 m do ponto de partida. O traçado liga as paradas em linha reta." TextWrapping="Wrap" Style="{StaticResource Label}" Margin="0,4,0,4" FontSize="11"/>
+                            <TextBlock Text="Prioriza baús novos por metro nas camadas ativas. Cada sugestão percorre até o dobro do raio, em linha reta." TextWrapping="Wrap" Style="{StaticResource Label}" Margin="0,4,0,4" FontSize="11"/>
                             <TextBlock x:Name="RouteStatus" Foreground="{StaticResource Gem}" TextWrapping="Wrap" FontSize="12"/>
                             <TextBlock x:Name="RadiusLabel" Style="{StaticResource Label}" Margin="0,6,0,0"/>
-                            <Slider x:Name="Radius" Minimum="5" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Value="20" ValueChanged="RadiusChanged" AutomationProperties.Name="Distância máxima da rota em metros"/>
+                            <Slider x:Name="Radius" Minimum="5" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Value="20" ValueChanged="RadiusChanged" AutomationProperties.Name="Alcance de coleta em metros"/>
                             <UniformGrid Rows="1" Margin="0,5,0,8">
                                 <Button x:Name="UndoButton" Padding="4,4" Content="Desfazer" Click="Undo" Style="{StaticResource Quiet}" Margin="0,0,3,0"/>
                                 <Button x:Name="FitButton" Padding="4,4" Content="Enquadrar" Click="FitStops" Style="{StaticResource Quiet}" Margin="0,0,3,0"/>

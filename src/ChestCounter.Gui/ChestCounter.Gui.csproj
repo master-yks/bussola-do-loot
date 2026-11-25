@@ -20,6 +20,7 @@
 
   <!-- Keep WinForms off the implicit usings so WPF's Button/Color/ColorConverter stay unambiguous. -->
   <ItemGroup>
+    <InternalsVisibleTo Include="ChestCounter.MapChecks" />
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
   </ItemGroup>
