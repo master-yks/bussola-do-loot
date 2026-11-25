@@ -1,4 +1,4 @@
-![Capa da Bússola do Loot, com uma bússola de latão e um baú sobre uma carta marítima](docs/imagens/capa.jpg)
+![Capa da Bússola do Loot, com a bússola e o baú dourado de Caçadores de Tesouro sobre a ilha em 3D](docs/imagens/capa.jpg)
 
 # Bússola do Loot
 
