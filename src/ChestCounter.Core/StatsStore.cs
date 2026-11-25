@@ -65,8 +65,7 @@ public static class LiveSessionJournal
     private static readonly object Sync = new();
 
     public static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "ChestCounter", "live_session.json");
+        AppChannel.DataDirectory, "live_session.json");
 
     public static LiveSessionState? Load()
     {
@@ -333,8 +332,7 @@ public static class StatsStore
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
     public static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "ChestCounter", "stats.json");
+        AppChannel.DataDirectory, "stats.json");
 
     public static LifetimeStats Load(string path)
     {

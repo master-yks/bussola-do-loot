@@ -28,7 +28,7 @@ public static class AppConfig
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
     public static string Path => System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ChestCounter", "app.json");
+        AppChannel.DataDirectory, "app.json");
 
     public static AppSettings Load()
     {

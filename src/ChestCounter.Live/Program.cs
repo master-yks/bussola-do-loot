@@ -85,13 +85,13 @@ Console.WriteLine($"Bússola do Loot · {ChestCounterService.Credits}");
 if (!counter.Available)
     Console.Error.WriteLine("Aviso: OCR indisponível no Windows; apenas o monitoramento automático de replays ficará ativo.");
 
-OverlayServer? server = new OverlayServer(7777)
+OverlayServer? server = new OverlayServer()
 {
     ConfigProvider = OverlayConfig.Json,
     StatsBuilder = live => ChestCounterService.OverlayJson(ChestCounterService.LoadStats(), live),
 };
 try { server.Start(); Console.WriteLine($"Overlay OBS: http://localhost:{server.Port}/"); }
-catch { server = null; Console.WriteLine("Porta 7777 já em uso pelo painel principal; enviando contagem ao painel."); }
+catch { server = null; Console.WriteLine($"Porta {AppChannel.OverlayPort} já em uso pelo painel principal; enviando contagem ao painel."); }
 
 using var http = new HttpClient(new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false })
     { Timeout = TimeSpan.FromSeconds(1) };
@@ -101,7 +101,7 @@ counter.LiveChanged += async n =>
     if (server != null) server.LiveCount = n;
     else
     {
-        try { using var response = await http.PostAsync($"http://localhost:7777/live?n={n?.ToString() ?? ""}", null); }
+        try { using var response = await http.PostAsync($"{AppChannel.OverlayUrl}live?n={n?.ToString() ?? ""}", null); }
         catch (HttpRequestException) { }
         catch (OperationCanceledException) { }
     }

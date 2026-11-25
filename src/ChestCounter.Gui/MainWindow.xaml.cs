@@ -100,9 +100,13 @@ public partial class MainWindow : Window
     public MainWindow(bool isVerifyMode)
     {
         _isVerifyMode = isVerifyMode;
-        InitializeComponent();
-
         _loadingSettings = true;
+        InitializeComponent();
+        OverlayUrlText.Text = AppChannel.OverlayUrl;
+        if (AppChannel.IsTest)
+        {
+            Title = TitleBarProduct.Text = "Bússola do Loot · Testes";
+        }
         if (isVerifyMode)
             _stats = CreatePreviewHistory();
         else
@@ -763,7 +767,7 @@ public partial class MainWindow : Window
 
     private void StartOverlay()
     {
-        _server = new OverlayServer(7777)
+        _server = new OverlayServer()
         {
             ConfigProvider = OverlayConfig.Json,
             StatsBuilder = live => ChestCounterService.OverlayJson(_stats, live),
@@ -771,12 +775,12 @@ public partial class MainWindow : Window
         try
         {
             _server.Start();
-            OverlayStatusText.Text = "✓ Servidor OBS ativo em http://localhost:7777/ (sincronizado ao vivo com seus estilos).";
+            OverlayStatusText.Text = $"✓ Servidor OBS ativo em {AppChannel.OverlayUrl} (sincronizado ao vivo com seus estilos).";
         }
         catch
         {
             _server = null;
-            OverlayStatusText.Text = "Porta 7777 já em uso por outra instância local.";
+            OverlayStatusText.Text = $"Porta {AppChannel.OverlayPort} já em uso por outra instância local.";
         }
     }
 
@@ -1661,7 +1665,7 @@ public partial class MainWindow : Window
 
         UpdateMaximizeIconAndFrame();
 
-        if (!_isVerifyMode)
+        if (!_isVerifyMode && !AppChannel.IsTest)
         {
             try
             {
@@ -2957,15 +2961,15 @@ public partial class MainWindow : Window
     {
         try
         {
-            Clipboard.SetText("http://localhost:7777/");
-            StatusText.Text = "✓ Endereço http://localhost:7777/ copiado para a área de transferência!";
+            Clipboard.SetText(AppChannel.OverlayUrl);
+            StatusText.Text = $"✓ Endereço {AppChannel.OverlayUrl} copiado para a área de transferência!";
         }
         catch { }
     }
 
     private void OpenObsBrowserButton_Click(object sender, RoutedEventArgs e)
     {
-        try { Process.Start(new ProcessStartInfo("http://localhost:7777/") { UseShellExecute = true }); }
+        try { Process.Start(new ProcessStartInfo(AppChannel.OverlayUrl) { UseShellExecute = true }); }
         catch { }
     }
 

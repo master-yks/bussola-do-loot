@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <!-- Replay parsing is the slow part; keep it optimised in Debug builds as well. -->
     <Optimize>true</Optimize>
+    <DefineConstants Condition="'$(Configuration)' == 'Testes'">$(DefineConstants);LOOT_TEST_CHANNEL</DefineConstants>
     <AssemblyName>ChestCounter.ReplayReader.Core</AssemblyName>
     <RootNamespace>ChestCounter</RootNamespace>
   </PropertyGroup>

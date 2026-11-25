@@ -42,8 +42,8 @@ public partial class App : Application
         if (!isVerifyMode)
         {
             // Single-instance check: if already running (e.g. minimized to tray), wake the existing window!
-            _instanceMutex = new Mutex(true, @"Local\ChestCounterGuiSingleInstance", out bool createdNew);
-            _showWindowEvent = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\ChestCounterGuiWakeup");
+            _instanceMutex = new Mutex(true, $@"Local\{AppChannel.Name}GuiSingleInstance", out bool createdNew);
+            _showWindowEvent = new EventWaitHandle(false, EventResetMode.AutoReset, $@"Local\{AppChannel.Name}GuiWakeup");
 
             if (!createdNew)
             {
@@ -107,7 +107,7 @@ public partial class App : Application
     {
         try
         {
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ChestCounter");
+            var dir = AppChannel.DataDirectory;
             Directory.CreateDirectory(dir);
             File.AppendAllText(
                 Path.Combine(dir, "diagnostics.log"),

@@ -409,7 +409,7 @@ public static class OverlayConfig
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
     public static string Path => System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ChestCounter", "overlay.json");
+        AppChannel.DataDirectory, "overlay.json");
 
     public static OverlaySettings Load()
     {

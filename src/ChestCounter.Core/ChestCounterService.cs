@@ -67,7 +67,7 @@ public static class ChestCounterService
     public static LifetimeStats LoadStats() => StatsStore.Load(StatsPath);
 
     // The GUI and the headless counter may finish scanning the same match concurrently.
-    private static readonly Mutex StatsWriter = new(false, @"Local\ChestCounterStatsWriter");
+    private static readonly Mutex StatsWriter = new(false, $@"Local\{AppChannel.Name}StatsWriter");
     private static readonly object ScanLock = new();
 
     private static T WithWriter<T>(Func<T> action)

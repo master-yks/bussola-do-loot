@@ -22,7 +22,7 @@ public sealed class OverlayServer : IDisposable
         set => LiveCountRaw = value ?? -1;
     }
 
-    public OverlayServer(int port = 7777)
+    public OverlayServer(int port = AppChannel.OverlayPort)
     {
         Port = port;
     }
