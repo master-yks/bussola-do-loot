@@ -1,0 +1,167 @@
+<UserControl x:Class="ChestCounter.Gui.IslandPlanner"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:ChestCounter.Gui">
+    <UserControl.Resources>
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border CornerRadius="5" Background="{StaticResource Bg}" BorderBrush="{StaticResource StrokeLit}" BorderThickness="1" Padding="8,4">
+                                            <DockPanel>
+                                                <TextBlock Text="⌄" Foreground="{StaticResource Gold}" DockPanel.Dock="Right"/>
+                                                <TextBlock VerticalAlignment="Center" Text="{Binding SelectedItem.Name, RelativeSource={RelativeSource AncestorType=ComboBox}}" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <TextBlock x:Name="Prompt" Text="{TemplateBinding Tag}" Foreground="{StaticResource Muted}" IsHitTestVisible="False" Margin="9,0,23,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False">
+                                <Border Background="{StaticResource Card}" BorderBrush="{StaticResource StrokeLit}" BorderThickness="1" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ScrollViewer MaxHeight="280" CanContentScroll="True"><ItemsPresenter/></ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="SelectedIndex" Value="-1"><Setter TargetName="Prompt" Property="Visibility" Value="Visible"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="LayerToggle" TargetType="CheckBox">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="Tile" Padding="6,2" CornerRadius="6" BorderThickness="1" BorderBrush="Transparent" Background="#172C35">
+                            <DockPanel>
+                                <Border x:Name="Lamp" DockPanel.Dock="Right" Width="15" Height="15" CornerRadius="4" BorderThickness="1" BorderBrush="#69818A" Margin="8,0,1,0" VerticalAlignment="Center">
+                                    <Path x:Name="Tick" Data="M2,6 L5,9 L11,2" Stroke="#17332F" StrokeThickness="1.8" Visibility="Hidden" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Tile" Property="Background" Value="#20383F"/>
+                                <Setter TargetName="Lamp" Property="Background" Value="#87DFCA"/>
+                                <Setter TargetName="Lamp" Property="BorderBrush" Value="#87DFCA"/>
+                                <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Tile" Property="BorderBrush" Value="#62808A"/></Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Tile" Property="BorderBrush" Value="{StaticResource Gold}"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition x:Name="SideWidth" Width="308"/></Grid.ColumnDefinitions>
+        <Border Style="{StaticResource Panel}" Padding="1" CornerRadius="9">
+            <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid Margin="12,7">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="BATTLE ROYALE  /  43.10" Foreground="{StaticResource Gold}" FontSize="10" FontWeight="Bold"/>
+                        <TextBlock Text="Crossbones Isle" FontFamily="{StaticResource Display}" Foreground="{StaticResource Text}" FontSize="23" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <ComboBox Grid.Column="1" x:Name="Places" Width="157" Tag="Localizar região" DisplayMemberPath="Name" TextSearch.TextPath="Name" SelectionChanged="PlaceSelected" AutomationProperties.Name="Localizar região" VerticalAlignment="Center"/>
+                    <Button Grid.Column="2" x:Name="PanelToggle" Padding="3,0" Click="TogglePanel" Width="33" Height="28" Margin="6,0,0,0" VerticalAlignment="Center" Style="{StaticResource Quiet}" ToolTip="Recolher painel" AutomationProperties.Name="Recolher ou abrir painel">
+                        <Grid Width="16" Height="14"><Rectangle RadiusX="2" RadiusY="2" Stroke="{StaticResource Steel}"/><Path x:Name="PanelGlyph" Data="M10,1 L10,13 M4,4 L7,7 4,10" Stroke="{StaticResource Steel}" StrokeThickness="1.3"/></Grid>
+                    </Button>
+                </Grid>
+                <local:IslandMap Grid.Row="1" x:Name="Map" AutomationProperties.Name="Ilha de Crossbones"/>
+                <Border Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" CornerRadius="12" Background="#E2152935" Padding="8,4" IsHitTestVisible="False">
+                    <StackPanel Orientation="Horizontal"><Path Data="M4,0 L8,10 L4,7 L0,10 Z" Fill="{StaticResource Gold}" VerticalAlignment="Center"/><TextBlock Text="N" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Text}" Margin="4,0,0,0"/></StackPanel>
+                </Border>
+                <Border x:Name="InfoCard" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" MaxWidth="250" Margin="8,0,8,42" Padding="10" CornerRadius="8" Background="#F1122530" BorderBrush="{StaticResource StrokeLit}" BorderThickness="1" Visibility="Collapsed">
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="×" Click="CloseInfo" Style="{StaticResource Quiet}" ToolTip="Fechar detalhe" AutomationProperties.Name="Fechar detalhe" VerticalAlignment="Top"/>
+                        <Image x:Name="InfoIcon" Width="32" Height="32" Margin="0,0,7,0" VerticalAlignment="Top"/>
+                        <StackPanel><TextBlock x:Name="InfoName" Style="{StaticResource SectionTitle}" TextWrapping="Wrap"/><TextBlock x:Name="InfoDetail" Style="{StaticResource Label}" TextWrapping="Wrap" FontSize="11"/></StackPanel>
+                    </DockPanel>
+                </Border>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="8">
+                    <Button Content="−" AutomationProperties.Name="Reduzir zoom" Click="ZoomOut" Style="{StaticResource Quiet}" Width="32" Padding="2,0"/>
+                    <Button Content="+" AutomationProperties.Name="Ampliar mapa" Click="ZoomIn" Style="{StaticResource Quiet}" Width="32" Padding="2,0" Margin="3,0,5,0"/>
+                    <Button Content="Ilha inteira" Click="Fit" Style="{StaticResource Quiet}"/>
+                </StackPanel>
+                <Border Grid.Row="2" Background="{StaticResource Card}" Padding="10,5">
+                    <DockPanel><TextBlock x:Name="MapMode" DockPanel.Dock="Left" Foreground="{StaticResource Gem}" FontWeight="SemiBold" FontSize="11" Margin="0,0,10,0"/>
+                        <TextBlock x:Name="MapHint" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Border>
+        <Border x:Name="Sidebar" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource Panel}" Padding="12,11">
+            <DockPanel>
+                <UniformGrid Rows="1" DockPanel.Dock="Top" Margin="0,0,0,9">
+                    <RadioButton x:Name="LayerTab" GroupName="plannerPane" IsChecked="True" Content="Explorar" Style="{StaticResource NavTab}" Checked="SwitchPane"/>
+                    <RadioButton x:Name="RouteTab" GroupName="plannerPane" Content="Planejar rota" Style="{StaticResource NavTab}" Checked="SwitchPane"/>
+                </UniformGrid>
+                <ScrollViewer x:Name="PaneScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <StackPanel x:Name="LayerPane">
+                            <TextBlock Text="Camadas do mapa" Style="{StaticResource SectionTitle}" FontSize="17"/>
+                            <TextBlock x:Name="LayerSummary" Style="{StaticResource Label}" Margin="0,1,0,8"/>
+                            <TextBox x:Name="LayerQuery" Height="30" VerticalContentAlignment="Center" TextChanged="FilterChanged" ToolTip="Buscar por tipo de objeto" AutomationProperties.Name="Filtrar camadas" />
+                            <TextBlock x:Name="QueryHint" Text="Buscar camada…" Style="{StaticResource Label}" IsHitTestVisible="False" Height="30" Margin="8,-30,0,0" Padding="0,6,0,0"/>
+                            <WrapPanel Margin="0,6,0,0">
+                                <Button Content="Só baús" Tag="chests" Click="Preset" Style="{StaticResource Quiet}"/>
+                                <Button Content="Todas" Tag="all" Click="Preset" Style="{StaticResource Quiet}" Margin="4,0"/>
+                                <Button Content="Limpar" Tag="none" Click="Preset" Style="{StaticResource Quiet}"/>
+                            </WrapPanel>
+                            <StackPanel x:Name="LayerList"/>
+                            <TextBlock x:Name="NoMatches" Text="Nenhuma camada encontrada." Style="{StaticResource Label}" Visibility="Collapsed" Margin="0,10"/>
+                            <CheckBox Content="Nomes das regiões" IsChecked="True" Checked="LabelsChanged" Unchecked="LabelsChanged" Margin="0,12,0,4"/>
+                            <TextBlock Text="Terreno HD · Fortiq. Ilha e pontos · Fortnite-API, Crisis e Fortnite Database. Versão 43.10." Style="{StaticResource Label}" FontSize="10.5" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel x:Name="RoutePane" Visibility="Collapsed">
+                            <TextBlock Text="Percurso de saque" Style="{StaticResource SectionTitle}" FontSize="17"/>
+                            <Border Background="#21383C" CornerRadius="7" Padding="10,7" Margin="0,7">
+                                <StackPanel>
+                                    <TextBlock x:Name="ChestTotal" Foreground="{StaticResource Gold}" FontFamily="{StaticResource Display}" FontSize="22" FontWeight="Bold"/>
+                                    <TextBlock x:Name="Breakdown" Style="{StaticResource Label}" FontSize="11" TextWrapping="Wrap"/>
+                                    <TextBlock x:Name="Distance" Foreground="{StaticResource Text}" Margin="0,3,0,0" FontSize="12"/>
+                                </StackPanel>
+                            </Border>
+                            <CheckBox x:Name="Edit" Content="Editar paradas no mapa" IsChecked="True" Checked="EditChanged" Unchecked="EditChanged"/>
+                            <TextBlock Text="Clique para marcar e arraste para mover. Shift + clique insere uma parada. Botão direito remove." TextWrapping="Wrap" Style="{StaticResource Label}" Margin="0,4,0,9" FontSize="11"/>
+                            <Button x:Name="SuggestButton" Content="Sugerir percurso de baús" Click="Suggest" Style="{StaticResource Primary}"/>
+                            <TextBlock Text="Até 8 baús das camadas ativas a 180 m do ponto de partida. O traçado liga as paradas em linha reta." TextWrapping="Wrap" Style="{StaticResource Label}" Margin="0,4,0,4" FontSize="11"/>
+                            <TextBlock x:Name="RouteStatus" Foreground="{StaticResource Gem}" TextWrapping="Wrap" FontSize="12"/>
+                            <TextBlock x:Name="RadiusLabel" Style="{StaticResource Label}" Margin="0,6,0,0"/>
+                            <Slider x:Name="Radius" Minimum="5" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Value="20" ValueChanged="RadiusChanged" AutomationProperties.Name="Distância máxima da rota em metros"/>
+                            <UniformGrid Rows="1" Margin="0,5,0,8">
+                                <Button x:Name="UndoButton" Padding="4,4" Content="Desfazer" Click="Undo" Style="{StaticResource Quiet}" Margin="0,0,3,0"/>
+                                <Button x:Name="FitButton" Padding="4,4" Content="Enquadrar" Click="FitStops" Style="{StaticResource Quiet}" Margin="0,0,3,0"/>
+                                <Button x:Name="NewButton" Padding="4,4" Content="Nova rota" Click="NewRoute" Style="{StaticResource Quiet}"/>
+                            </UniformGrid>
+                            <Expander x:Name="Itinerary" Header="Paradas do percurso" Foreground="{StaticResource Text}" Margin="0,0,0,7" Visibility="Collapsed">
+                                <StackPanel x:Name="StopList" Margin="2,4,0,0"/>
+                            </Expander>
+                            <TextBlock Text="Nome da rota" Style="{StaticResource Label}"/>
+                            <DockPanel Margin="0,4,0,6">
+                                <Button x:Name="SaveButton" DockPanel.Dock="Right" Content="Salvar" Click="Save" Style="{StaticResource Primary}" Margin="4,0,0,0"/>
+                                <TextBox x:Name="RouteName" MaxLength="64" VerticalContentAlignment="Center" TextChanged="NameChanged" AutomationProperties.Name="Nome da rota"/>
+                            </DockPanel>
+                            <ComboBox x:Name="Saved" Tag="Escolher rota salva" DisplayMemberPath="Name" SelectionChanged="SavedSelected" AutomationProperties.Name="Abrir rota salva"/>
+                            <Button x:Name="ExportButton" Content="Exportar vista em PNG" Click="Export" Margin="0,6,0,0" Style="{StaticResource Quiet}"/>
+                            <TextBlock x:Name="Notice" Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

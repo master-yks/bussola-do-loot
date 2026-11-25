@@ -1,0 +1,60 @@
+[package]
+name = "chest-counter"
+version = "2.0.0"
+edition = "2024"
+authors = ["master-yks"]
+description = "Bússola do Loot em Rust — Ultra-rápido, Ao Vivo (OCR) + Leitor de Replays + Overlay OBS e In-Game"
+
+[lib]
+path = "rust/lib.rs"
+
+[[bin]]
+name = "ChestCounter"
+path = "rust/main.rs"
+
+[[bin]]
+name = "chestcounter-live"
+path = "rust/live.rs"
+
+[dependencies]
+eframe = { version = "0.31", default-features = false, features = ["default_fonts", "glow"] }
+egui = "0.31"
+image = { version = "0.25", default-features = false, features = ["png", "ico"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+rayon = "1.10"
+aes = "0.8"
+cipher = { version = "0.4", features = ["block-padding"] }
+regex = "1.11"
+anyhow = "1.0"
+dirs = "6.0"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+    "Foundation",
+    "Foundation_Collections",
+    "Globalization",
+    "Graphics_Imaging",
+    "Media_Ocr",
+    "Storage_Streams",
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_Graphics_Gdi",
+    "Win32_Security",
+    "Win32_System_Com",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Threading",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[build-dependencies]
+winresource = "0.1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = false

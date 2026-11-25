@@ -1,0 +1,1218 @@
+<Window x:Class="ChestCounter.Gui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ChestCounter.Gui"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Language="pt-BR" Title="Bússola do Loot — master-yks"
+        Width="1300" Height="734" MinWidth="760" MinHeight="520"
+        WindowStyle="SingleBorderWindow" ResizeMode="CanResize" Icon="Assets/token.ico"
+        Background="{StaticResource Bg}" WindowStartupLocation="Manual"
+        TextOptions.TextFormattingMode="Ideal" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        ToolTipService.InitialShowDelay="180" ToolTipService.BetweenShowDelay="60" ToolTipService.ShowDuration="18000"
+        SizeChanged="MainWindow_SizeChanged" LocationChanged="MainWindow_LocationChanged">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="36" ResizeBorderThickness="7" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+
+    <Border x:Name="WindowRootBorder" Background="{StaticResource Bg}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="36"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- ==================== CUSTOM OBSIDIAN TITLE BAR ==================== -->
+            <Border Grid.Row="0" Background="{StaticResource TitleBarBg}" BorderBrush="{StaticResource Stroke}" BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Brand Title (Draggable Window Caption Region) -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0" IsHitTestVisible="False">
+                        <Image Source="Assets/token.png" Width="23" Height="20" Margin="0,0,9,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <TextBlock Text="Bússola do Loot" Foreground="{StaticResource Text}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Border Background="{StaticResource GoldSoft}" BorderBrush="{StaticResource GoldBorder}" BorderThickness="1"
+                                CornerRadius="4" Padding="6,1" Margin="9,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="CAÇADORES DE TESOURO" Foreground="{StaticResource Gold}" FontSize="9.5" FontWeight="Bold"/>
+                        </Border>
+                        <TextBlock x:Name="TitleBarAuthorText" Text="·  master-yks" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center" Margin="9,0,0,0"/>
+                    </StackPanel>
+
+                    <!-- Quick In-Game HUD, Style & Lock Toggles in Title Bar -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <Button x:Name="TitleHudQuickButton" Style="{StaticResource Quiet}"
+                                Content="HUD no Jogo: OFF" Padding="10,3" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="TitleHudQuickButton_Click"
+                                ToolTip="Mostra ou oculta o contador flutuante sobre o Fortnite (Atalho: Ctrl+Shift+O)"/>
+                        <Button x:Name="TitleHudStyleButton" Style="{StaticResource Quiet}"
+                                Content="🎨 Estilo" Padding="9,3" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="TitleHudStyleButton_Click"
+                                ToolTip="Abre o estúdio de estilos e transparência do overlay (Ciclar no jogo: Ctrl+Shift+M)"/>
+                        <Button x:Name="TitleHudLockButton" Style="{StaticResource Quiet}"
+                                Content="🔓 Móvel" Padding="9,3" FontSize="11" VerticalAlignment="Center"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="TitleHudLockButton_Click"
+                                ToolTip="Fixa o overlay para impedir cliques acidentais durante o jogo (Atalho: Ctrl+Shift+L)"/>
+                    </StackPanel>
+
+                    <!-- Native-Feel Window Caption Controls -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
+                        <Button Style="{StaticResource CaptionButton}" Click="MinimizeWindow_Click" ToolTip="Minimizar janela">
+                            <Path Data="M0,0.5 L10,0.5" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.2"/>
+                        </Button>
+                        <Button x:Name="MaxRestoreButton" Style="{StaticResource CaptionButton}" Click="MaximizeRestoreWindow_Click" ToolTip="Maximizar ou restaurar tamanho">
+                            <Path x:Name="MaxRestoreIcon" Data="M0.5,0.5 L9.5,0.5 L9.5,9.5 L0.5,9.5 Z"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.2"/>
+                        </Button>
+                        <Button Style="{StaticResource CloseCaptionButton}" Click="CloseWindow_Click" ToolTip="Fechar">
+                            <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.3"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ==================== MAIN APPLICATION BODY ==================== -->
+            <Grid x:Name="MainContentGrid" Grid.Row="1" Margin="20,12,20,10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- ==================== ADAPTIVE NAVIGATION & ACTION BAR ==================== -->
+                <Grid x:Name="ToolbarGrid" Grid.Row="0" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Workspace Navigation Tabs -->
+                    <Border x:Name="NavTabsBorder" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                            Background="{StaticResource Card}" BorderBrush="{StaticResource Stroke}" BorderThickness="1"
+                            CornerRadius="9" Padding="3">
+                        <WrapPanel Orientation="Horizontal">
+                            <RadioButton x:Name="TabOverview" Style="{StaticResource NavTab}" Content="Visão Geral" GroupName="nav" IsChecked="True" Checked="WorkspaceTab_Checked"/>
+                            <RadioButton x:Name="TabMap" Style="{StaticResource NavTab}" Content="Mapa" GroupName="nav" Checked="WorkspaceTab_Checked"/>
+                            <RadioButton x:Name="TabProbabilities" Style="{StaticResource NavTab}" Content="Probabilidades" GroupName="nav" Checked="WorkspaceTab_Checked"/>
+                            <RadioButton x:Name="TabOverlay" Style="{StaticResource NavTab}" Content="Estúdio do HUD" GroupName="nav" Checked="WorkspaceTab_Checked"/>
+                            <RadioButton x:Name="TabHistory" Style="{StaticResource NavTab}" Content="Histórico" GroupName="nav" Checked="WorkspaceTab_Checked"/>
+                        </WrapPanel>
+                    </Border>
+
+                    <!-- Period Filter & Live/Sync Actions -->
+                    <WrapPanel x:Name="ControlsRightPanel" Grid.Column="2" Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Stroke}" BorderThickness="1"
+                                CornerRadius="8" Padding="3" Margin="0,0,8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="F0" Style="{StaticResource Pill}" Content="24h" Tag="0" GroupName="f" Checked="Filter_Checked"
+                                             ToolTip="Filtra estatísticas das últimas 24 horas"/>
+                                <RadioButton x:Name="F1" Style="{StaticResource Pill}" Content="7 dias" Tag="1" GroupName="f" Checked="Filter_Checked"
+                                             ToolTip="Filtra estatísticas dos últimos 7 dias"/>
+                                <RadioButton x:Name="F2" Style="{StaticResource Pill}" Content="Temporada" Tag="2" GroupName="f" Checked="Filter_Checked" IsChecked="True"
+                                             ToolTip="Exibe todas as partidas válidas da Temporada Pirata atual"/>
+                                <RadioButton x:Name="F3" Style="{StaticResource Pill}" Content="Tudo" Tag="3" GroupName="f" Checked="Filter_Checked"
+                                             ToolTip="Exibe todo o histórico de partidas salvo"/>
+                            </StackPanel>
+                        </Border>
+                        <Button x:Name="LiveButton" Content="● Ao vivo ligado" Style="{StaticResource Quiet}" Click="LiveButton_Click"
+                                ToolTip="Ativa ou pausa a leitura óptica (OCR) em tempo real e o monitoramento automático de replays"/>
+                        <Button x:Name="ScanButton" Content="Sincronizar" Style="{StaticResource Primary}" Margin="8,0,0,0" Click="ScanButton_Click"
+                                ToolTip="Varre todos os replays do Fortnite em múltiplos núcleos do processador sem perder nenhum baú"/>
+                    </WrapPanel>
+                </Grid>
+
+                <Border x:Name="MapHost" Grid.Row="1" Visibility="Collapsed"/>
+                <!-- ==================== WORKSPACE 1: VISÃO GERAL ==================== -->
+                <ScrollViewer x:Name="OverviewScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Visible">
+                    <Grid x:Name="OverviewGrid">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="OverviewLeftCol" Width="*"/>
+                            <ColumnDefinition x:Name="OverviewRightCol" Width="380"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- LEFT COLUMN -->
+                        <Grid x:Name="OverviewLeftPanel" Grid.Column="0" Grid.Row="0" Margin="0,0,14,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*" MinHeight="168"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Dual Hero Panel: Season Total + Live Match -->
+                            <Border Grid.Row="0" Style="{StaticResource Panel}" Padding="0" ClipToBounds="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Grid x:Name="HeroDualGrid" Grid.Row="0" MinHeight="138">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition x:Name="HeroLeftCol" Width="1.12*"/>
+                                            <ColumnDefinition x:Name="HeroRightCol" Width="1*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Left Hero: Accumulated Season Chests -->
+                                        <Border x:Name="HeroLeftBorder" Background="{StaticResource HeroBrush}" Grid.Column="0" Grid.Row="0" BorderBrush="{StaticResource Stroke}" BorderThickness="0,0,1,0" Padding="22,14,18,12">
+                                            <StackPanel VerticalAlignment="Center">
+                                                <WrapPanel Orientation="Horizontal">
+                                                    <Border x:Name="SyncBadgeBorder" Background="{StaticResource EmeraldSoft}" BorderBrush="#443DDC84" BorderThickness="1"
+                                                            CornerRadius="5" Padding="7,2">
+                                                        <TextBlock x:Name="SyncBadgeText" Text="✓ Contagem automática da temporada" Foreground="{StaticResource Emerald}" FontSize="10.5" FontWeight="SemiBold"/>
+                                                    </Border>
+                                                    <Border x:Name="SeasonLiveDeltaBadge" Background="{StaticResource GoldSoft}" BorderBrush="{StaticResource GoldBorder}" BorderThickness="1"
+                                                            CornerRadius="5" Padding="7,2" Margin="7,0,0,0" Visibility="Collapsed">
+                                                        <TextBlock x:Name="SeasonLiveDeltaText" Text="+0 ao vivo" Foreground="{StaticResource Gold}" FontSize="10.5" FontWeight="Bold"/>
+                                                    </Border>
+                                                </WrapPanel>
+                                                <TextBlock Text="Seus baús na temporada" Foreground="{StaticResource Steel}" FontSize="12.5" Margin="0,7,0,0"/>
+                                                <TextBlock x:Name="SeasonHeroTotalText" Text="0" FontFamily="{StaticResource Display}" Foreground="{StaticResource Gold}"
+                                                           FontSize="68" FontWeight="Bold" Margin="-2,-8,0,-7"/>
+                                                <TextBlock x:Name="SeasonHeroSubText" Text="Sincronizando replays da temporada…" Style="{StaticResource Label}" FontSize="11.5" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Right Hero: Current Live Match -->
+                                        <Grid x:Name="HeroRightGrid" Grid.Column="1" Grid.Row="0" ClipToBounds="True">
+                                            <Canvas HorizontalAlignment="Right" VerticalAlignment="Top" Width="0" Height="0" IsHitTestVisible="False">
+                                                <Ellipse Width="320" Height="240" Canvas.Left="-220" Canvas.Top="-30">
+                                                    <Ellipse.Fill>
+                                                        <RadialGradientBrush>
+                                                            <GradientStop Color="#4564C8B7" Offset="0"/>
+                                                            <GradientStop Color="#0064C8B7" Offset="1"/>
+                                                        </RadialGradientBrush>
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+                                            </Canvas>
+                                            <Image x:Name="HeroChestImage" Source="chest.png" Width="112" Height="112" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   Margin="0,4,16,0" RenderOptions.BitmapScalingMode="HighQuality" IsHitTestVisible="False"/>
+                                            <StackPanel x:Name="HeroLiveStack" Margin="22,14,136,12" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse x:Name="LiveDotEllipse" Width="8" Height="8" Fill="{StaticResource Gem}" VerticalAlignment="Center" Margin="0,1,7,0"/>
+                                                    <TextBlock Text="Partida ao vivo" Foreground="{StaticResource Text}" FontSize="12.5" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                                <TextBlock x:Name="ThisGameText" Text="—" Style="{StaticResource Figure}" FontSize="68" FontWeight="Bold" Margin="-2,-8,0,-7"/>
+                                                <TextBlock x:Name="ThisGameSubText" Text="Aguardando partida…" Style="{StaticResource Label}" FontSize="11.5" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Grid>
+
+                                    <!-- 4-Column Summary Strip -->
+                                    <Border Grid.Row="1" BorderBrush="{StaticResource Stroke}" BorderThickness="0,1,0,0" Background="#08FFFFFF">
+                                        <UniformGrid x:Name="HeroStatsStrip" Columns="4">
+                                            <Border Background="Transparent" Padding="20,9,10,9" x:Name="KpiAvgCard">
+                                                <StackPanel>
+                                                    <TextBlock Text="Média por Partida" Style="{StaticResource Label}" FontSize="11.5"/>
+                                                    <TextBlock x:Name="AvgYouText" Text="0,0" Style="{StaticResource Figure}" FontSize="30" Margin="0,-2,0,-2"/>
+                                                    <TextBlock x:Name="RecentFormText" Text="" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border BorderBrush="{StaticResource Stroke}" BorderThickness="1,0,0,0" Padding="16,9,10,9" x:Name="KpiPeriodCard">
+                                                <StackPanel>
+                                                    <TextBlock x:Name="PeriodLabelText" Text="Baús no Período" Style="{StaticResource Label}" FontSize="11.5" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock x:Name="YourTotalText" Text="0" Style="{StaticResource Figure}" FontSize="30" Margin="0,-2,0,-2"/>
+                                                    <TextBlock x:Name="MatchesText" Text="" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border BorderBrush="{StaticResource Stroke}" BorderThickness="1,0,0,0" Padding="16,9,10,9" x:Name="KpiBestCard">
+                                                <StackPanel>
+                                                    <TextBlock Text="Última / Recorde" Style="{StaticResource Label}" FontSize="11.5"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,-2,0,-2">
+                                                        <TextBlock x:Name="LastGameText" Text="—" Style="{StaticResource Figure}" FontSize="30"/>
+                                                        <TextBlock Text=" · máx " Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Bottom" Margin="3,0,2,5"/>
+                                                        <TextBlock x:Name="BestText" Text="0" FontFamily="{StaticResource Display}" Foreground="{StaticResource Gem}" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                                                    </StackPanel>
+                                                    <TextBlock x:Name="LastMatchText" Text="" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Style="{StaticResource ClickableTokenCard}" BorderThickness="1,0,0,0" Padding="16,9,10,9" x:Name="KpiTokenCard"
+                                                    MouseLeftButtonUp="OpenProbabilitiesTab_Click"
+                                                    ToolTip="Clique para abrir os gráficos interativos e simulações de probabilidade acumulada">
+                                                <StackPanel>
+                                                    <TextBlock Text="Chance Token Loja Pirata" Foreground="{StaticResource Gold}" FontSize="11.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock x:Name="HeroTokenChanceText" Text="0,000%" Style="{StaticResource Figure}" FontSize="30" Foreground="{StaticResource Gold}" Margin="0,-2,0,-2"/>
+                                                    <TextBlock x:Name="HeroTokenSubText" Text="ver gráficos →" Foreground="#CCA86B" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </UniformGrid>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Row="1" Style="{StaticResource Panel}" Padding="16,12" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,9">
+                                        <TextBlock x:Name="ChestKindsPeriodText" DockPanel.Dock="Right" VerticalAlignment="Center" Style="{StaticResource Label}"/>
+                                        <TextBlock Text="Seus baús por tipo" Style="{StaticResource SectionTitle}"/>
+                                    </DockPanel>
+                                    <ItemsControl x:Name="ChestKindList">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="2,0" Padding="4,7" Background="{StaticResource CardAlt}"
+                                                        CornerRadius="8" ToolTip="{Binding Hint}">
+                                                    <StackPanel>
+                                                        <Grid Width="88" Height="60" HorizontalAlignment="Center">
+                                                            <Image Source="{Binding Icon}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                            <Border Visibility="{Binding BuriedMarker}" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                    Background="#352A1C" BorderBrush="#C99856" BorderThickness="1" CornerRadius="8" Padding="4">
+                                                                <!-- A crossed mark on a folded treasure map denotes the dig site. -->
+                                                                <Path Width="17" Height="15" Stretch="Uniform" Stroke="#FFE2A0" StrokeThickness="1.6"
+                                                                      StrokeLineJoin="Round" Data="M1,4 L7,1 L13,4 L19,1 L19,14 L13,17 L7,14 L1,17 Z M8,6 L13,12 M13,6 L8,12"/>
+                                                            </Border>
+                                                            <Image Source="Assets/poster.png" Visibility="{Binding PosterMarker}" Width="20" Height="29"
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Bottom" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        </Grid>
+                                                        <TextBlock Text="{Binding Count}" FontFamily="{StaticResource Display}" FontWeight="SemiBold"
+                                                                   Foreground="{Binding Color}" FontSize="24" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource Steel}" FontSize="12" HorizontalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <WrapPanel VerticalAlignment="Center" Margin="2,7,0,0" ToolTip="As duas aparências entram na contagem de baús de Elemental ou do cartaz, conforme a origem registrada.">
+                                        <TextBlock Text="Variantes de Elemental" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                                            <Image Source="Assets/sprite-fortune.png" Width="48" Height="43" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            <TextBlock Text="Fortuna" Foreground="{StaticResource Steel}" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Image Source="Assets/sprite-cursed.png" Width="48" Height="43" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            <TextBlock Text="Amaldiçoado" Foreground="{StaticResource Steel}" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </WrapPanel>
+                                    <TextBlock x:Name="ChestKindNote" Style="{StaticResource Label}" Margin="2,7,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Match-by-Match Vector Bar Chart -->
+                            <Border x:Name="MatchChartBorder" Grid.Row="2" Style="{StaticResource Panel}" Margin="0,11,0,0" Padding="18,12,18,12">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <TextBlock x:Name="ChartMetaText" DockPanel.Dock="Right" Text="" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Baús por partida" Style="{StaticResource SectionTitle}"/>
+                                            <TextBlock x:Name="ChartSubtitleHint" Text="  ·  passe o mouse nas barras para inspecionar" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DockPanel>
+
+                                    <Grid Grid.Row="1" ClipToBounds="True">
+                                        <TextBlock x:Name="NoDataText" Text="Nenhuma partida encontrada neste período. Jogue uma partida ou clique em Sincronizar."
+                                                   Style="{StaticResource Label}" FontSize="12.5" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Visibility="Collapsed"/>
+                                        <Canvas x:Name="MatchChartCanvas" Background="Transparent" ClipToBounds="True"
+                                                SizeChanged="MatchChartCanvas_SizeChanged"
+                                                MouseMove="MatchChartCanvas_MouseMove"
+                                                MouseLeave="MatchChartCanvas_MouseLeave"/>
+                                        <Border x:Name="MatchChartTooltipBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0"
+                                                Background="#F6131722" BorderBrush="{StaticResource Gold}" BorderThickness="1"
+                                                CornerRadius="7" Padding="10,6" IsHitTestVisible="False" Visibility="Collapsed">
+                                            <Border.RenderTransform>
+                                                <TranslateTransform/>
+                                            </Border.RenderTransform>
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.5" Color="#000000"/>
+                                            </Border.Effect>
+                                            <TextBlock x:Name="MatchChartTooltipText" Foreground="{StaticResource Text}" FontSize="11.5" LineHeight="16.5" IsHitTestVisible="False"/>
+                                        </Border>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+
+                            <!-- Squad & Frequent Teammates -->
+                            <Grid x:Name="SquadBottomGrid" Grid.Row="3" Margin="0,11,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition x:Name="SquadCol0" Width="*"/>
+                                    <ColumnDefinition x:Name="SquadCol1" Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border x:Name="SquadCardBorder" Grid.Column="0" Grid.Row="0" Style="{StaticResource Panel}" Margin="0,0,6,0" MinHeight="122" Padding="16,12">
+                                    <StackPanel>
+                                        <DockPanel>
+                                            <TextBlock x:Name="SquadTotalText" DockPanel.Dock="Right" Text="" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Último Esquadrão" Style="{StaticResource SectionTitle}"/>
+                                        </DockPanel>
+                                        <ItemsControl x:Name="SquadList" Margin="0,6,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource HoverRow}" Padding="5,2" ToolTip="{Binding Tooltip}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Name}" Foreground="{StaticResource Steel}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding Value}" FontFamily="{StaticResource Display}" Foreground="{StaticResource Text}" FontSize="16.5" VerticalAlignment="Center"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock x:Name="SquadEmptyText" Text="Seus colegas de equipe aparecem aqui após partidas em grupo." Style="{StaticResource Label}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border x:Name="MatesCardBorder" Grid.Column="1" Grid.Row="0" Style="{StaticResource Panel}" Margin="6,0,0,0" MinHeight="122" Padding="16,12">
+                                    <StackPanel>
+                                        <TextBlock Text="Parceiros Mais Frequentes" Style="{StaticResource SectionTitle}"/>
+                                        <ItemsControl x:Name="MatesList" Margin="0,6,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource HoverRow}" Padding="5,2.5" ToolTip="{Binding Tooltip}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Name}" Foreground="{StaticResource Steel}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding Value}" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock x:Name="MatesEmptyText" Text="O ranking de parceiros aparece após partidas em equipe." Style="{StaticResource Label}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Grid>
+
+                        <!-- RIGHT COLUMN -->
+                        <ScrollViewer x:Name="OverviewRightScroll" Grid.Column="1" Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                            <Border Style="{StaticResource Panel}" Padding="0" VerticalAlignment="Top">
+                                <StackPanel>
+                                    <!-- Treasure Hour Banner -->
+                                    <Border x:Name="HourBorder" Background="{StaticResource CardAlt}" CornerRadius="12,12,0,0" Padding="16,10">
+                                        <StackPanel>
+                                            <TextBlock x:Name="HourTitleText" Text="Próxima Hora do Tesouro" Foreground="{StaticResource Text}" FontSize="12" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="HourCountdownText" Text="" FontFamily="{StaticResource Display}" Foreground="{StaticResource Gold}"
+                                                       FontSize="38" FontWeight="SemiBold" Margin="-1,-3,0,-3"/>
+                                            <TextBlock x:Name="HourBoostText" Text="" Foreground="{StaticResource Steel}" FontSize="10.5" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Quick Accumulated Probabilities -->
+                                    <StackPanel Margin="15,10,15,11">
+                                        <DockPanel Margin="2,0,2,0">
+                                            <TextBlock DockPanel.Dock="Right" Text="chance atual ⓘ" Style="{StaticResource Label}" FontSize="11" VerticalAlignment="Center" Cursor="Help"
+                                                       ToolTip="Probabilidade exata de Bernoulli 1 − (1 − 1/k)^N acumulada com todos os baús abertos nesta temporada. Passe o mouse sobre qualquer item abaixo para ver detalhes completos."/>
+                                            <TextBlock x:Name="WeekText" Text="Chances Acumuladas" Style="{StaticResource SectionTitle}"/>
+                                        </DockPanel>
+
+                                        <ItemsControl x:Name="OddsList" Margin="0,4,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource HoverRow}" Padding="5,2.5" Margin="0,0.5" ToolTip="{Binding Tooltip}">
+                                                        <StackPanel>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="64"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel Margin="0,0,6,0">
+                                                                    <TextBlock Text="{Binding Label}" Foreground="{StaticResource Text}" FontSize="11.5" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
+                                                                    <TextBlock Text="{Binding Item}" Style="{StaticResource Label}" FontSize="10" TextTrimming="CharacterEllipsis"/>
+                                                                </StackPanel>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Odds}" Foreground="{Binding OddsBrush}" FontFamily="{StaticResource Display}"
+                                                                           FontSize="16" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                                <TextBlock Grid.Column="2" Text="{Binding Luck}" Foreground="{Binding BarBrush}" FontWeight="Bold" FontSize="11.5"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                            <Grid Height="3" Margin="0,2.5,0,0">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="{Binding FillStar}"/>
+                                                                    <ColumnDefinition Width="{Binding EmptyStar}"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <Border Grid.Column="0" Background="{Binding BarBrush}" CornerRadius="1.5"/>
+                                                                <Border Grid.Column="1" Background="#1CFFFFFF" CornerRadius="1.5"/>
+                                                            </Grid>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Button Content="Abrir Gráficos Interativos de Probabilidade →" Style="{StaticResource Quiet}"
+                                                Margin="2,7,2,0" Padding="10,5" Click="OpenProbabilitiesTab_ButtonClick"/>
+
+                                        <Border Height="1" Background="{StaticResource Stroke}" Margin="2,8,2,7"/>
+
+                                        <TextBlock x:Name="TokenText" Text="Ficha da Loja Pirata ainda não encontrada" Foreground="{StaticResource Gold}" FontWeight="SemiBold" FontSize="11.5" Margin="2,0" TextWrapping="Wrap"/>
+                                        <ItemsControl x:Name="PrizeList" Margin="0,3,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource HoverRow}" Padding="4,1.5" ToolTip="{Binding Tooltip}">
+                                                        <TextBlock Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis">
+                                                            <Run Text="{Binding Name, Mode=OneWay}" Foreground="{StaticResource Text}"/>
+                                                            <Run Text="{Binding Value, Mode=OneWay}"/>
+                                                        </TextBlock>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock x:Name="PrizeEmptyText" Text="Os tesouros e engenhocas obtidos nas partidas aparecem aqui."
+                                                   Style="{StaticResource Label}" FontSize="11" Margin="2,3,2,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </ScrollViewer>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- ==================== WORKSPACE 2: GRÁFICOS DE PROBABILIDADE ==================== -->
+                <ScrollViewer x:Name="ProbabilitiesGrid" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                    <StackPanel Margin="0,0,4,0">
+                        <!-- Selector & Chart Mode Controls -->
+                        <Border Style="{StaticResource Panel}" Padding="14,10">
+                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <RadioButton x:Name="ProbTokenRadio" Style="{StaticResource Pill}" Content="Token Pirata" Tag="token" GroupName="ptarget" IsChecked="True" Checked="ProbTarget_Checked"/>
+                                    <RadioButton Style="{StaticResource Pill}" Content="Traje Dourado" Tag="outfit" GroupName="ptarget" Checked="ProbTarget_Checked"/>
+                                    <RadioButton Style="{StaticResource Pill}" Content="Veículo" Tag="car" GroupName="ptarget" Checked="ProbTarget_Checked"/>
+                                    <RadioButton Style="{StaticResource Pill}" Content="Picareta" Tag="pickaxe" GroupName="ptarget" Checked="ProbTarget_Checked"/>
+                                    <RadioButton Style="{StaticResource Pill}" Content="Música Jam" Tag="jam" GroupName="ptarget" Checked="ProbTarget_Checked"/>
+                                    <RadioButton Style="{StaticResource Pill}" Content="Tela" Tag="loading" GroupName="ptarget" Checked="ProbTarget_Checked"/>
+                                    <RadioButton Style="{StaticResource Pill}" Content="Engenhoca" Tag="gizmo" GroupName="ptarget" Checked="ProbTarget_Checked"/>
+                                </WrapPanel>
+
+                                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <CheckBox x:Name="ShowSquadCurveCheck" Content="Incluir baús do esquadrão" IsChecked="True"
+                                              VerticalAlignment="Center" Margin="0,2,12,2" Click="ProbOption_Changed"
+                                              ToolTip="A Ficha da Loja Pirata e as Engenhocas são compartilhadas quando um colega de esquadrão abre o baú!"/>
+                                    <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Stroke}" BorderThickness="1" CornerRadius="7" Padding="2">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton x:Name="ZoomRangeSmart" Style="{StaticResource Pill}" Content="Zoom no Seu Ritmo" GroupName="prange" IsChecked="True" Checked="ProbRange_Checked"
+                                                         ToolTip="Ajusta a escala horizontal para destacar seu progresso atual e as próximas dezenas de partidas"/>
+                                            <RadioButton x:Name="ZoomRangeFull" Style="{StaticResource Pill}" Content="Curva 0–95%" GroupName="prange" Checked="ProbRange_Checked"
+                                                         ToolTip="Exibe a curva assintótica completa até 95% de probabilidade acumulada"/>
+                                        </StackPanel>
+                                    </Border>
+                                </WrapPanel>
+                            </WrapPanel>
+                        </Border>
+
+                        <!-- 4 Mathematical KPI Cards -->
+                        <UniformGrid x:Name="ProbKpiUniformGrid" Columns="4" Margin="0,10,0,0">
+                            <Border Style="{StaticResource Panel}" Margin="0,0,5,5" Padding="15,10">
+                                <StackPanel>
+                                    <TextBlock Text="Sua Chance Acumulada (Solo)" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="ProbCurrentText" Text="0,000%" Style="{StaticResource Figure}" FontSize="32" Foreground="{StaticResource Gold}"/>
+                                    <TextBlock x:Name="ProbCurrentSubText" Text="" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Panel}" Margin="5,0,5,5" Padding="15,10">
+                                <StackPanel>
+                                    <TextBlock x:Name="ProbSecondaryTitleText" Text="Chance Efetiva c/ Esquadrão" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="ProbBoostedText" Text="0,000%" Style="{StaticResource Figure}" FontSize="32" Foreground="{StaticResource Cyan}"/>
+                                    <TextBlock x:Name="ProbBoostedSubText" Text="" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Panel}" Margin="5,0,5,5" Padding="15,10">
+                                <StackPanel>
+                                    <TextBlock Text="Projeção (+50 Partidas)" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="ProbProjectedText" Text="0,000%" Style="{StaticResource Figure}" FontSize="32" Foreground="{StaticResource Emerald}"/>
+                                    <TextBlock x:Name="ProbProjectedSubText" Text="" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Panel}" Margin="5,0,0,5" Padding="15,10">
+                                <StackPanel>
+                                    <TextBlock Text="Ponto de 50% (Cara ou Coroa)" Style="{StaticResource Label}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="ProbHalfwayText" Text="95.308" Style="{StaticResource Figure}" FontSize="32"/>
+                                    <TextBlock x:Name="ProbHalfwaySubText" Text="" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <!-- Two Interactive Vector Probability Charts -->
+                        <Grid x:Name="ProbChartsGrid" Margin="0,5,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="ProbChartCol0" Width="1.18*"/>
+                                <ColumnDefinition x:Name="ProbChartCol1" Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Chart 1: Cumulative Probability Curve P = 1 - (1 - p)^N -->
+                            <Border x:Name="ProbCurveCardBorder" Grid.Column="0" Grid.Row="0" Style="{StaticResource Panel}" Margin="0,0,6,0" Padding="16,12" Height="276">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="18"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                            <Ellipse Width="8" Height="8" Fill="{StaticResource Gold}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBlock Text="Taxa Base" Style="{StaticResource Label}" FontSize="11" Margin="0,0,10,0"/>
+                                            <Ellipse Width="8" Height="8" Fill="{StaticResource Gem}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBlock Text="Hora do Tesouro" Style="{StaticResource Label}" FontSize="11"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="CurveChartTitleText" Text="Curva Acumulada — Ficha da Loja Pirata" Style="{StaticResource SectionTitle}" TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
+
+                                    <Grid Grid.Row="1" Margin="0,8,0,4" ClipToBounds="True">
+                                        <Canvas x:Name="ProbCurveCanvas" Background="Transparent" ClipToBounds="True"
+                                                SizeChanged="ProbCurveCanvas_SizeChanged"
+                                                MouseMove="ProbCurveCanvas_MouseMove"
+                                                MouseLeave="ProbCurveCanvas_MouseLeave"/>
+                                        <Border x:Name="ProbCurveTooltipBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0"
+                                                Background="#F6131722" BorderBrush="{StaticResource Gold}" BorderThickness="1"
+                                                CornerRadius="7" Padding="10,6" IsHitTestVisible="False" Visibility="Collapsed">
+                                            <Border.RenderTransform>
+                                                <TranslateTransform/>
+                                            </Border.RenderTransform>
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.5" Color="#000000"/>
+                                            </Border.Effect>
+                                            <TextBlock x:Name="ProbCurveTooltipText" Foreground="{StaticResource Text}" FontSize="11.5" LineHeight="16.5" IsHitTestVisible="False"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <TextBlock x:Name="ProbCurveHoverText" Grid.Row="2"
+                                               Text="Passe o mouse sobre a curva para simular qualquer quantidade de baús e partidas."
+                                               Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Chart 2: Real Season Cumulative Luck Progression -->
+                            <Border x:Name="SeasonProbCardBorder" Grid.Column="1" Grid.Row="0" Style="{StaticResource Panel}" Margin="6,0,0,0" Padding="16,12" Height="276">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="18"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel>
+                                        <TextBlock x:Name="HistoryProbMetaText" DockPanel.Dock="Right" Text="" Style="{StaticResource Label}" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBlock x:Name="HistoryProbTitleText" Text="Sua Evolução Real na Temporada" Style="{StaticResource SectionTitle}" TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
+
+                                    <Grid Grid.Row="1" Margin="0,8,0,4" ClipToBounds="True">
+                                        <Canvas x:Name="SeasonProbCanvas" Background="Transparent" ClipToBounds="True"
+                                                SizeChanged="SeasonProbCanvas_SizeChanged"
+                                                MouseMove="SeasonProbCanvas_MouseMove"
+                                                MouseLeave="SeasonProbCanvas_MouseLeave"/>
+                                        <Border x:Name="SeasonProbTooltipBorder" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0"
+                                                Background="#F6131722" BorderBrush="{StaticResource Gold}" BorderThickness="1"
+                                                CornerRadius="7" Padding="10,6" IsHitTestVisible="False" Visibility="Collapsed">
+                                            <Border.RenderTransform>
+                                                <TranslateTransform/>
+                                            </Border.RenderTransform>
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.5" Color="#000000"/>
+                                            </Border.Effect>
+                                            <TextBlock x:Name="SeasonProbTooltipText" Foreground="{StaticResource Text}" FontSize="11.5" LineHeight="16.5" IsHitTestVisible="False"/>
+                                        </Border>
+                                    </Grid>
+
+                                    <TextBlock x:Name="SeasonProbHoverText" Grid.Row="2"
+                                               Text="Mostra como sua chance acumulada cresceu da 1ª partida até agora."
+                                               Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- Full 7-Tier Probability Matrix & Simulator -->
+                        <Border Style="{StaticResource Panel}" Margin="0,12,0,4" Padding="18,14">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,8">
+                                    <TextBlock DockPanel.Dock="Right" Text="Fórmula exata: P(≥1) = 1 − (1 − 1/k)^N" Style="{StaticResource Label}" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Matriz Completa de Probabilidades &amp; Projeções de Temporada" Style="{StaticResource SectionTitle}" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+
+                                <Grid Margin="6,0,6,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2.1*"/>
+                                        <ColumnDefinition Width="1.1*"/>
+                                        <ColumnDefinition Width="1.5*"/>
+                                        <ColumnDefinition Width="1.1*"/>
+                                        <ColumnDefinition Width="1.35*"/>
+                                        <ColumnDefinition Width="1.1*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="RECOMPENSA / ITEM DA SEMANA" Style="{StaticResource Label}" FontSize="10" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="1" Text="TAXA POR BAÚ" Style="{StaticResource Label}" FontSize="10" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="2" Text="SUA CHANCE ACUMULADA" Style="{StaticResource Label}" FontSize="10" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="3" Text="C/ ESQUADRÃO" Style="{StaticResource Label}" FontSize="10" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="4" Text="EM +50 / +100 PARTIDAS" Style="{StaticResource Label}" FontSize="10" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Grid.Column="5" Text="ESPERADO (E[X])" Style="{StaticResource Label}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
+                                </Grid>
+                                <Border Height="1" Background="{StaticResource Stroke}" Margin="0,0,0,4"/>
+
+                                <ItemsControl x:Name="OddsComparisonList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource HoverRow}" BorderBrush="#12FFFFFF" BorderThickness="0,0,0,1" Padding="6,7" ToolTip="{Binding Tooltip}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="2.1*"/>
+                                                        <ColumnDefinition Width="1.1*"/>
+                                                        <ColumnDefinition Width="1.5*"/>
+                                                        <ColumnDefinition Width="1.1*"/>
+                                                        <ColumnDefinition Width="1.35*"/>
+                                                        <ColumnDefinition Width="1.1*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Margin="0,0,10,0">
+                                                        <TextBlock Text="{Binding Label}" Foreground="{StaticResource Text}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding ItemName}" Style="{StaticResource Label}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding BaseRate}" FontFamily="{StaticResource Display}" Foreground="{StaticResource Steel}" FontSize="17" VerticalAlignment="Center"/>
+                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                        <TextBlock Text="{Binding SoloChance}" Foreground="{Binding AccentBrush}" FontWeight="Bold" FontSize="13"/>
+                                                        <Grid Height="4.5" Margin="0,3,0,0">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="{Binding FillStar}"/>
+                                                                <ColumnDefinition Width="{Binding EmptyStar}"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Grid.Column="0" Background="{Binding AccentBrush}" CornerRadius="2"/>
+                                                            <Border Grid.Column="1" Background="#1CFFFFFF" CornerRadius="2"/>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="3" Text="{Binding SquadChance}" Foreground="{StaticResource Cyan}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="4" Text="{Binding Projections}" Foreground="{StaticResource Emerald}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="5" Text="{Binding ExpectedText}" Foreground="{StaticResource Steel}" FontSize="11.5" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ==================== WORKSPACE 3: PARTIDAS & SOBREPOSIÇÃO ==================== -->
+                <ScrollViewer x:Name="HistoryScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                    <Grid x:Name="HistoryGrid">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="HistoryLeftCol" Width="*"/>
+                            <ColumnDefinition x:Name="HistoryRightCol" Width="380"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Complete Match-by-Match Audit Log -->
+                        <Border x:Name="HistoryLeftBorder" Grid.Column="0" Grid.Row="0" Style="{StaticResource Panel}" Margin="0,0,14,0" Padding="18,14">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <DockPanel Margin="0,0,0,10">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Grid Width="190" Margin="0,0,8,0">
+                                            <TextBox x:Name="HistorySearchBox" TextChanged="HistorySearchBox_TextChanged" Padding="8,5" FontSize="12"
+                                                     ToolTip="Busque por tipo de baú, modo, parceiro, data ou tesouro"/>
+                                            <TextBlock x:Name="HistorySearchPlaceholder" Text="Buscar partida ou baú…"
+                                                       Foreground="#667085" FontSize="11.5" Margin="11,0,8,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <Button Content="Exportar CSV" Style="{StaticResource Quiet}" Padding="11,5" Click="ExportCsvButton_Click"
+                                                ToolTip="Exporta o histórico completo (compatível com Excel em português) para arquivo CSV"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Histórico de partidas" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock x:Name="HistorySummaryText" Text="" Style="{StaticResource Label}" FontSize="11.5" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DockPanel>
+
+                                <Border Grid.Row="1" BorderBrush="{StaticResource Stroke}" BorderThickness="0,0,0,1" Padding="6,0,14,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="48"/>
+                                            <ColumnDefinition Width="114"/>
+                                            <ColumnDefinition Width="154"/>
+                                            <ColumnDefinition Width="78"/>
+                                            <ColumnDefinition Width="102"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="#" Style="{StaticResource Label}" FontSize="10.5" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="1" Text="DATA / HORA" Style="{StaticResource Label}" FontSize="10.5" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="2" Text="MODO" Style="{StaticResource Label}" FontSize="10.5" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="3" Text="SEUS BAÚS" Style="{StaticResource Label}" FontSize="10.5" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="4" Text="ESQUADRÃO" Style="{StaticResource Label}" FontSize="10.5" FontWeight="Bold"/>
+                                        <TextBlock Grid.Column="5" Text="TESOUROS / ORIGEM" Style="{StaticResource Label}" FontSize="10.5" FontWeight="Bold"/>
+                                    </Grid>
+                                </Border>
+
+                                <ScrollViewer x:Name="MatchListScroll" Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,4,0,0">
+                                    <StackPanel>
+                                        <ItemsControl x:Name="MatchHistoryList" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource HoverRow}" BorderBrush="#10FFFFFF" BorderThickness="0,0,0,1" Padding="6,7" ToolTip="{Binding Tooltip}">
+                                                        <StackPanel>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="48"/>
+                                                                <ColumnDefinition Width="114"/>
+                                                                <ColumnDefinition Width="154"/>
+                                                                <ColumnDefinition Width="78"/>
+                                                                <ColumnDefinition Width="102"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Number}" Foreground="{StaticResource Muted}" FontSize="11.5" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding When}" Foreground="{StaticResource Steel}" FontSize="12" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="2" Text="{Binding Mode}" Foreground="{StaticResource Text}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,6,0"/>
+                                                            <TextBlock Grid.Column="3" Text="{Binding You}" FontFamily="{StaticResource Display}" Foreground="{StaticResource Gold}" FontSize="19" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="4" Text="{Binding Squad}" Foreground="{StaticResource Steel}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,6,0"/>
+                                                            <TextBlock Grid.Column="5" Text="{Binding Details}" Foreground="{Binding DetailsBrush}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                        </Grid>
+                                                        <TextBlock Text="{Binding KindSummary}" Style="{StaticResource Label}" Margin="48,2,0,0" TextWrapping="Wrap"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock x:Name="HistoryEmptyFilterText" Text="Nenhuma partida corresponde à busca informada."
+                                                   Style="{StaticResource Label}" HorizontalAlignment="Center" Margin="0,24,0,12" Visibility="Collapsed"/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+
+                        <!-- System Preferences & Diagnostics -->
+                        <ScrollViewer x:Name="HistoryRightScroll" Grid.Column="1" Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <Border Style="{StaticResource Panel}" Padding="18,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Sobreposição &amp; Bandeja" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock Text="Personalize estilos transparentes, tamanho, cores, contorno de visibilidade, âncoras do minimapa e fonte do OBS na aba dedicada de Overlay."
+                                                   Style="{StaticResource Label}" FontSize="11.5" Margin="0,6,0,10" TextWrapping="Wrap"/>
+                                        <Button Content="🎨 Abrir Estúdio de Personalização do Overlay →" Style="{StaticResource Primary}"
+                                                Padding="12,7" Click="OpenOverlayTab_ButtonClick"/>
+                                        <CheckBox x:Name="TrayCheck" Content="Minimizar aplicativo para a bandeja do sistema" Margin="0,12,0,0" Click="Tray_Toggled"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- System Health & Maintenance -->
+                                <Border Style="{StaticResource Panel}" Margin="0,12,0,0" Padding="18,14">
+                                    <StackPanel>
+                                        <TextBlock Text="Diagnóstico &amp; Manutenção" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock x:Name="DiagOcrText" Text="" Style="{StaticResource Label}" FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="DiagDemosText" Text="" Style="{StaticResource Label}" FontSize="11.5" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="DiagStorageText" Text="" Style="{StaticResource Label}" FontSize="11.5" Margin="0,4,0,0" TextWrapping="Wrap"/>
+
+                                        <UniformGrid Columns="2" Margin="0,12,0,0">
+                                            <Button Content="Pasta de Replays" Style="{StaticResource Quiet}" Margin="0,0,4,0" Padding="10,6" Click="OpenDemosFolderButton_Click"
+                                                    ToolTip="Abre a pasta %LOCALAPPDATA%\FortniteGame\Saved\Demos"/>
+                                            <Button Content="Pasta de Dados" Style="{StaticResource Quiet}" Margin="4,0,0,0" Padding="10,6" Click="OpenDataFolderButton_Click"
+                                                    ToolTip="Abre a pasta %APPDATA%\ChestCounter com seus arquivos de configuração e histórico"/>
+                                        </UniformGrid>
+
+                                        <Button x:Name="ResetButton" Content="Zerar Histórico Salvo" Style="{StaticResource Quiet}"
+                                                Margin="0,8,0,0" Padding="10,6" Click="ResetButton_Click"
+                                                ToolTip="Apaga o cache salvo (os arquivos .replay que ainda estão na pasta do Fortnite poderão ser sincronizados novamente)"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- ==================== WORKSPACE 4: ESTÚDIO DE PERSONALIZAÇÃO DO OVERLAY ==================== -->
+                <ScrollViewer x:Name="OverlayStudioScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                    <Grid x:Name="OverlayStudioGrid" Margin="0,0,2,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="OverlayStudioLeftCol" Width="438"/>
+                            <ColumnDefinition x:Name="OverlayStudioRightCol" Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- LEFT COLUMN: LIVE PREVIEW STAGE, ANCHORS & OBS -->
+                        <StackPanel x:Name="OverlayStudioLeftPanel" Grid.Column="0" Grid.Row="0" Margin="0,0,14,0">
+                            <!-- Live Preview Stage -->
+                            <Border Style="{StaticResource Panel}" Padding="16,13">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,9">
+                                        <Border DockPanel.Dock="Right" Background="{StaticResource GoldSoft}" BorderBrush="{StaticResource GoldBorder}"
+                                                BorderThickness="1" CornerRadius="5" Padding="7,2" VerticalAlignment="Center">
+                                            <TextBlock x:Name="OverlayActivePresetBadgeText" Text="⚡ Fortnite Tático" Foreground="{StaticResource Gold}" FontSize="10.5" FontWeight="Bold"/>
+                                        </Border>
+                                        <TextBlock Text="Prévia Ao Vivo no Jogo" Style="{StaticResource SectionTitle}" VerticalAlignment="Center"/>
+                                    </DockPanel>
+
+                                    <!-- Simulated Game Scene Viewport -->
+                                    <Border x:Name="PreviewViewportBorder" Height="186" CornerRadius="11" BorderBrush="{StaticResource StrokeLit}" BorderThickness="1" ClipToBounds="True">
+                                        <Grid>
+                                            <Canvas x:Name="PreviewSceneCanvas" IsHitTestVisible="False" SizeChanged="PreviewSceneCanvas_SizeChanged"/>
+
+                                            <!-- Scene Selector Pills inside Top-Right of Viewport -->
+                                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                                                    Background="#B8080B12" BorderBrush="#38FFFFFF" BorderThickness="1" CornerRadius="7" Padding="2">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <RadioButton x:Name="SceneSkyRadio" Style="{StaticResource Pill}" Content="☀ Céu" Tag="0" GroupName="bgscene" Padding="7,3" FontSize="10.5" IsChecked="True" Checked="PreviewBackdrop_Checked"
+                                                                 ToolTip="Testar visibilidade contra o céu azul claro do Fortnite"/>
+                                                    <RadioButton x:Name="SceneSnowRadio" Style="{StaticResource Pill}" Content="❄ Neve" Tag="1" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
+                                                                 ToolTip="Teste extremo de contraste em bioma branco de neve"/>
+                                                    <RadioButton x:Name="SceneIslandRadio" Style="{StaticResource Pill}" Content="🌿 Ilha" Tag="2" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
+                                                                 ToolTip="Terreno de combate verde e dourado"/>
+                                                    <RadioButton x:Name="SceneNightRadio" Style="{StaticResource Pill}" Content="🌙 Noite" Tag="3" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
+                                                                 ToolTip="Ambiente noturno / caverna escura"/>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- Actual 1:1 Rendered OverlayHudView -->
+                                            <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,34,14,24">
+                                                <local:OverlayHudView x:Name="PreviewHudView"/>
+                                            </Viewbox>
+
+                                            <!-- Subtle Viewport Hint -->
+                                            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8,0,8,7"
+                                                    Background="#9E07090F" CornerRadius="5" Padding="7,2" IsHitTestVisible="False">
+                                                <TextBlock x:Name="PreviewHintText" Text="Simulação real 1:1 · teste em Céu e Neve para conferir a leitura"
+                                                           Foreground="#DCE4F0" FontSize="10" TextTrimming="CharacterEllipsis"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Simulation & Quick HUD Controls -->
+                                    <UniformGrid Columns="2" Margin="0,9,0,0">
+                                        <Button x:Name="PreviewSimPulseButton" Content="✨ Simular +1 Baú" Style="{StaticResource Quiet}" Margin="0,0,4,0" Padding="8,5.5" FontSize="11.5"
+                                                Click="PreviewSimPulseButton_Click"
+                                                ToolTip="Simula a abertura de um baú na partida para testar o contador ao vivo e a animação +1"/>
+                                        <Button x:Name="PreviewToggleStateButton" Content="Modo Prévia: Ao Vivo" Style="{StaticResource Quiet}" Margin="4,0,0,0" Padding="8,5.5" FontSize="11.5"
+                                                Click="PreviewToggleStateButton_Click"
+                                                ToolTip="Alterna a prévia entre Em Partida (Ao Vivo) e Aguardando no Lobby (Espera)"/>
+                                    </UniformGrid>
+
+                                    <Border Height="1" Background="{StaticResource Stroke}" Margin="0,11,0,10"/>
+
+                                    <CheckBox x:Name="InGameOverlayCheck" Content="Exibir contador flutuante sobre o Fortnite" Click="InGameOverlay_Toggled"/>
+                                    <CheckBox x:Name="OverlayLockCheck" Content="Fixar overlay (cliques atravessam direto p/ o jogo)" Margin="0,8,0,0" Click="OverlayLock_Toggled"
+                                              ToolTip="Quando fixado, você pode mirar e atirar normalmente sobre o overlay sem clicar nele"/>
+
+                                    <UniformGrid Columns="2" Margin="0,10,0,0">
+                                        <Button x:Name="OverlayLockButton" Content="🔒 Fixar Overlay" Style="{StaticResource Quiet}" Margin="0,0,4,0" Padding="8,6" FontSize="11.5"
+                                                Click="OverlayLockButton_Click"/>
+                                        <Button x:Name="CyclePresetQuickButton" Content="🎨 Próximo Estilo" Style="{StaticResource Quiet}" Margin="4,0,0,0" Padding="8,6" FontSize="11.5"
+                                                Click="CyclePresetButton_Click"
+                                                ToolTip="Alterna rapidamente para o próximo estilo visual (Atalho dentro da partida: Ctrl+Shift+M)"/>
+                                    </UniformGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Smart Fortnite Screen Anchors -->
+                            <Border Style="{StaticResource Panel}" Margin="0,11,0,0" Padding="16,12">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <TextBlock x:Name="OverlayCoordsText" DockPanel.Dock="Right" Text="Posição livre" Style="{StaticResource Label}" FontSize="11" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Posição Rápida no Fortnite" Style="{StaticResource SectionTitle}"/>
+                                    </DockPanel>
+
+                                    <UniformGrid Columns="2">
+                                        <Button x:Name="AnchorTopLeftBtn" Content="↖ Topo Esquerdo" Tag="top_left" Style="{StaticResource Quiet}" Margin="0,0,4,6" Padding="8,5.5" FontSize="11.5" Click="OverlayAnchor_Click"
+                                                ToolTip="Canto superior esquerdo da tela"/>
+                                        <Button x:Name="AnchorTopCenterBtn" Content="⬆ Topo Central" Tag="top_center" Style="{StaticResource Quiet}" Margin="4,0,0,6" Padding="8,5.5" FontSize="11.5" Click="OverlayAnchor_Click"
+                                                ToolTip="Centralizado no topo (ótimo para o estilo Pílula Minimalista)"/>
+                                        <Button x:Name="AnchorBesideMapBtn" Content="🗺 Ao Lado do Minimapa" Tag="beside_minimap" Style="{StaticResource Quiet}" Margin="0,0,4,6" Padding="8,5.5" FontSize="11.5" Click="OverlayAnchor_Click"
+                                                ToolTip="Encaixa no topo à esquerda do minimapa do Fortnite sem cobrir o mapa"/>
+                                        <Button x:Name="AnchorBelowMapBtn" Content="↘ Abaixo do Minimapa" Tag="below_minimap" Style="{StaticResource Quiet}" Margin="4,0,0,6" Padding="8,5.5" FontSize="11.5" Click="OverlayAnchor_Click"
+                                                ToolTip="Encaixa na lateral direita logo abaixo do minimapa e contadores da partida"/>
+                                        <Button x:Name="AnchorBottomLeftBtn" Content="↙ Base Esquerda" Tag="bottom_left" Style="{StaticResource Quiet}" Margin="0,0,4,0" Padding="8,5.5" FontSize="11.5" Click="OverlayAnchor_Click"
+                                                ToolTip="Canto inferior esquerdo da tela"/>
+                                        <Button x:Name="AnchorBottomRightBtn" Content="↘ Base Direita" Tag="bottom_right" Style="{StaticResource Quiet}" Margin="4,0,0,0" Padding="8,5.5" FontSize="11.5" Click="OverlayAnchor_Click"
+                                                ToolTip="Canto inferior direito da tela"/>
+                                    </UniformGrid>
+
+                                    <Border Background="#10FFFFFF" BorderBrush="{StaticResource Stroke}" BorderThickness="1" CornerRadius="7" Padding="9,6" Margin="0,9,0,0">
+                                        <TextBlock Style="{StaticResource Label}" FontSize="10.8" TextWrapping="Wrap" LineHeight="15.5">
+                                            <Run Text="Atalhos na partida:" Foreground="{StaticResource Text}" FontWeight="SemiBold"/>
+                                            <Run Text=" Ctrl+Shift+O mostra/oculta · Ctrl+Shift+L trava cliques · "/>
+                                            <Run Text="Ctrl+Shift+M troca o estilo ao vivo!" Foreground="{StaticResource Gold}"/>
+                                        </TextBlock>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- OBS Browser Source Integration -->
+                            <Border Style="{StaticResource Panel}" Margin="0,11,0,0" Padding="16,12">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <TextBlock x:Name="OverlayUrlText" DockPanel.Dock="Right" Text="http://localhost:7777/" Foreground="{StaticResource Gold}"
+                                                   FontSize="11.5" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonUp="CopyObsUrl_Click"
+                                                   ToolTip="Clique para copiar o endereço da Fonte Navegador do OBS"/>
+                                        <TextBlock Text="OBS Studio / Streamlabs" Style="{StaticResource SectionTitle}"/>
+                                    </DockPanel>
+                                    <CheckBox x:Name="SyncObsCheck" Content="Sincronizar estilo, cores e transparência com o OBS" Margin="0,9,0,0" Click="OverlayToggleOption_Changed"/>
+                                    <UniformGrid Columns="2" Margin="0,9,0,0">
+                                        <Button Content="Copiar URL OBS" Style="{StaticResource Quiet}" Margin="0,0,4,0" Padding="8,5.5" FontSize="11.5" Click="CopyObsUrlButton_Click"/>
+                                        <Button Content="Abrir no Navegador" Style="{StaticResource Quiet}" Margin="4,0,0,0" Padding="8,5.5" FontSize="11.5" Click="OpenObsBrowserButton_Click"/>
+                                    </UniformGrid>
+                                    <TextBlock x:Name="OverlayStatusText" Text="" Style="{StaticResource Label}" FontSize="10.8" Margin="0,7,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- RIGHT COLUMN: PRESET GALLERY & GRANULAR CUSTOMIZATION -->
+                        <StackPanel x:Name="OverlayStudioRightPanel" Grid.Column="1" Grid.Row="0">
+                            <!-- Section 1: 9 Curated Visual Presets -->
+                            <Border Style="{StaticResource Panel}" Padding="16,12">
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <Button DockPanel.Dock="Right" Content="↺ Restaurar Padrão Fortnite" Style="{StaticResource Quiet}"
+                                                Padding="9,4" FontSize="11" Click="ResetDefaultOverlayStyle_Click"
+                                                ToolTip="Restaura o estilo padrão recomendado (Fortnite Tático Transparente)"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Galeria de Estilos (9 Presets)" Style="{StaticResource SectionTitle}"/>
+                                            <TextBlock Text="Escolha uma estética pronta ou personalize cada detalhe abaixo como preferir" Style="{StaticResource Label}" FontSize="11"/>
+                                        </StackPanel>
+                                    </DockPanel>
+
+                                    <UniformGrid x:Name="PresetCardsGrid" Columns="3" Margin="0,2,-6,-6"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Section 2: Layout, Frame, Font & Transparency Sliders -->
+                            <Border Style="{StaticResource Panel}" Margin="0,11,0,0" Padding="16,12">
+                                <StackPanel>
+                                    <TextBlock Text="Formato, Moldura &amp; Visibilidade Transparente" Style="{StaticResource SectionTitle}" Margin="0,0,0,9"/>
+
+                                    <!-- Layout Mode -->
+                                    <Grid Margin="0,0,0,7">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Layout" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1" Background="{StaticResource Bg}" BorderBrush="{StaticResource Stroke}" BorderThickness="1" CornerRadius="7" Padding="2" HorizontalAlignment="Left">
+                                            <WrapPanel Orientation="Horizontal">
+                                                <RadioButton x:Name="LayoutTacticalRadio" Style="{StaticResource Pill}" Content="⚡ Fortnite Tático" Tag="tactical" GroupName="hudlayout" Padding="9,4" FontSize="11.5" Checked="HudLayout_Checked"/>
+                                                <RadioButton x:Name="LayoutPillRadio" Style="{StaticResource Pill}" Content="💊 Barra 1 Linha" Tag="pill" GroupName="hudlayout" Padding="9,4" FontSize="11.5" Checked="HudLayout_Checked"/>
+                                                <RadioButton x:Name="LayoutMicroRadio" Style="{StaticResource Pill}" Content="🎯 Micro HUD" Tag="micro" GroupName="hudlayout" Padding="9,4" FontSize="11.5" Checked="HudLayout_Checked"/>
+                                                <RadioButton x:Name="LayoutVerticalRadio" Style="{StaticResource Pill}" Content="📐 Coluna Lateral" Tag="vertical" GroupName="hudlayout" Padding="9,4" FontSize="11.5" Checked="HudLayout_Checked"/>
+                                                <RadioButton x:Name="LayoutCardRadio" Style="{StaticResource Pill}" Content="📊 Cartão Completo" Tag="card" GroupName="hudlayout" Padding="9,4" FontSize="11.5" Checked="HudLayout_Checked"/>
+                                            </WrapPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Chrome / Frame Style -->
+                                    <Grid Margin="0,0,0,7">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Moldura" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1" Background="{StaticResource Bg}" BorderBrush="{StaticResource Stroke}" BorderThickness="1" CornerRadius="7" Padding="2" HorizontalAlignment="Left">
+                                            <WrapPanel Orientation="Horizontal">
+                                                <RadioButton x:Name="ChromeAngledRadio" Style="{StaticResource Pill}" Content="▱ Inclinado Fortnite" Tag="angled" GroupName="hudchrome" Padding="9,4" FontSize="11.5" Checked="HudChrome_Checked"/>
+                                                <RadioButton x:Name="ChromeCapsuleRadio" Style="{StaticResource Pill}" Content="◖ Cápsula" Tag="capsule" GroupName="hudchrome" Padding="9,4" FontSize="11.5" Checked="HudChrome_Checked"/>
+                                                <RadioButton x:Name="ChromeGlassRadio" Style="{StaticResource Pill}" Content="▢ Vidro Suave" Tag="glass" GroupName="hudchrome" Padding="9,4" FontSize="11.5" Checked="HudChrome_Checked"/>
+                                                <RadioButton x:Name="ChromeSharpRadio" Style="{StaticResource Pill}" Content="▭ Reto Esports" Tag="sharp" GroupName="hudchrome" Padding="9,4" FontSize="11.5" Checked="HudChrome_Checked"/>
+                                                <RadioButton x:Name="ChromeNoneRadio" Style="{StaticResource Pill}" Content="👻 Sem Fundo" Tag="none" GroupName="hudchrome" Padding="9,4" FontSize="11.5" Checked="HudChrome_Checked"/>
+                                            </WrapPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Font Family -->
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Fonte" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1" Background="{StaticResource Bg}" BorderBrush="{StaticResource Stroke}" BorderThickness="1" CornerRadius="7" Padding="2" HorizontalAlignment="Left">
+                                            <WrapPanel Orientation="Horizontal">
+                                                <RadioButton x:Name="FontFortniteRadio" Style="{StaticResource Pill}" Content="Fortnite Condensada" Tag="fortnite" GroupName="hudfont" Padding="9,4" FontSize="11.5" Checked="HudFont_Checked"/>
+                                                <RadioButton x:Name="FontModernRadio" Style="{StaticResource Pill}" Content="Moderna Limpa" Tag="modern" GroupName="hudfont" Padding="9,4" FontSize="11.5" Checked="HudFont_Checked"/>
+                                                <RadioButton x:Name="FontMonoRadio" Style="{StaticResource Pill}" Content="Competitiva Mono" Tag="mono" GroupName="hudfont" Padding="9,4" FontSize="11.5" Checked="HudFont_Checked"/>
+                                            </WrapPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Height="1" Background="{StaticResource Stroke}" Margin="0,0,0,9"/>
+
+                                    <!-- 5 Precision Sliders -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="154"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="54"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="27"/>
+                                            <RowDefinition Height="27"/>
+                                            <RowDefinition Height="27"/>
+                                            <RowDefinition Height="27"/>
+                                            <RowDefinition Height="27"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Text="Opacidade do Fundo" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"
+                                                   ToolTip="0% deixa totalmente sem caixa de fundo; 30–40% cria um vidro leve estilo Fortnite"/>
+                                        <Slider x:Name="BgOpacitySlider" Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="100" Value="34" ValueChanged="OverlaySlider_Changed"/>
+                                        <TextBlock x:Name="BgOpacityValueText" Grid.Row="0" Grid.Column="2" Text="34%" Foreground="{StaticResource Gold}" FontWeight="SemiBold" FontSize="11.5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Row="1" Text="Contorno dos Números" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"
+                                                   ToolTip="Borda escura nítida ao redor das letras para garantir leitura perfeita mesmo contra céu claro ou neve"/>
+                                        <Slider x:Name="TextStrokeSlider" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="32" Value="16.5" ValueChanged="OverlaySlider_Changed"/>
+                                        <TextBlock x:Name="TextStrokeValueText" Grid.Row="1" Grid.Column="2" Text="1,7 px" Foreground="{StaticResource Text}" FontWeight="SemiBold" FontSize="11.5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Row="2" Text="Tamanho (Escala)" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"/>
+                                        <Slider x:Name="ScaleSlider" Grid.Row="2" Grid.Column="1" Minimum="65" Maximum="165" Value="100" ValueChanged="OverlaySlider_Changed"/>
+                                        <TextBlock x:Name="ScaleValueText" Grid.Row="2" Grid.Column="2" Text="100%" Foreground="{StaticResource Text}" FontWeight="SemiBold" FontSize="11.5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Row="3" Text="Brilho da Moldura" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"/>
+                                        <Slider x:Name="BorderStrengthSlider" Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="100" Value="36" ValueChanged="OverlaySlider_Changed"/>
+                                        <TextBlock x:Name="BorderStrengthValueText" Grid.Row="3" Grid.Column="2" Text="36%" Foreground="{StaticResource Text}" FontWeight="SemiBold" FontSize="11.5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                        <TextBlock Grid.Row="4" Text="Opacidade Geral" Style="{StaticResource Label}" FontSize="11.5" VerticalAlignment="Center"/>
+                                        <Slider x:Name="HudOpacitySlider" Grid.Row="4" Grid.Column="1" Minimum="25" Maximum="100" Value="98" ValueChanged="OverlaySlider_Changed"/>
+                                        <TextBlock x:Name="HudOpacityValueText" Grid.Row="4" Grid.Column="2" Text="98%" Foreground="{StaticResource Text}" FontWeight="SemiBold" FontSize="11.5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Section 3: Colors & Header Branding -->
+                            <Border Style="{StaticResource Panel}" Margin="0,11,0,0" Padding="16,12">
+                                <StackPanel>
+                                    <TextBlock Text="Cores &amp; Identidade Visual" Style="{StaticResource SectionTitle}" Margin="0,0,0,8"/>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="96"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Text="Destaque" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                                        <WrapPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Border x:Name="AccentSwatch" Width="20" Height="20" CornerRadius="5" BorderBrush="#44FFFFFF" BorderThickness="1" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBox x:Name="AccentBox" Width="82" Padding="8,4" FontSize="11.5" TextChanged="Accent_Changed" ToolTip="Cor principal (baús da partida e barra lateral)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#F5B942" Tag="#F5B942" Margin="7,0,0,0" Click="Preset_Click" ToolTip="Ouro Mítico (#F5B942)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#00F5D4" Tag="#00F5D4" Click="Preset_Click" ToolTip="Slurp Neon (#00F5D4)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#38BDF8" Tag="#38BDF8" Click="Preset_Click" ToolTip="Azul Raro Fortnite (#38BDF8)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#E879F9" Tag="#E879F9" Click="Preset_Click" ToolTip="Épico Ponto Zero (#E879F9)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#FB923C" Tag="#FB923C" Click="Preset_Click" ToolTip="Lendário Laranja (#FB923C)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#FF3D6B" Tag="#FF3D6B" Click="Preset_Click" ToolTip="Rubi Carmesim (#FF3D6B)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#3DDC84" Tag="#3DDC84" Click="Preset_Click" ToolTip="Verde Incomum (#3DDC84)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#FFFFFF" Tag="#FFFFFF" Click="Preset_Click" ToolTip="Branco Puro (#FFFFFF)"/>
+                                        </WrapPanel>
+
+                                        <TextBlock Grid.Row="1" Text="Secundária" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                                        <WrapPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,8,0,0">
+                                            <Border x:Name="SecondarySwatch" Width="20" Height="20" CornerRadius="5" BorderBrush="#44FFFFFF" BorderThickness="1" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBox x:Name="SecondaryBox" Width="82" Padding="8,4" FontSize="11.5" TextChanged="SecondaryAccent_Changed" ToolTip="Cor de destaque para Token Pirata e Hora do Tesouro"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#4CC9F0" Tag="#4CC9F0" Margin="7,0,0,0" Click="SecondaryPreset_Click" ToolTip="Ciano Celeste (#4CC9F0)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#F5B942" Tag="#F5B942" Click="SecondaryPreset_Click" ToolTip="Ouro Pirata (#F5B942)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#3DDC84" Tag="#3DDC84" Click="SecondaryPreset_Click" ToolTip="Esmeralda (#3DDC84)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#FF3D6B" Tag="#FF3D6B" Click="SecondaryPreset_Click" ToolTip="Carmesim (#FF3D6B)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#A78BFA" Tag="#A78BFA" Click="SecondaryPreset_Click" ToolTip="Violeta (#A78BFA)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#F8FAFC" Tag="#F8FAFC" Click="SecondaryPreset_Click" ToolTip="Gelo Claro (#F8FAFC)"/>
+                                        </WrapPanel>
+
+                                        <TextBlock Grid.Row="2" Text="Tom do Vidro" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                                        <WrapPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,8,0,0">
+                                            <Border x:Name="BgColorSwatch" Width="20" Height="20" CornerRadius="5" BorderBrush="#44FFFFFF" BorderThickness="1" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBox x:Name="BgHexBox" Width="82" Padding="8,4" FontSize="11.5" TextChanged="BgHex_Changed" ToolTip="Cor base da placa translúcida de fundo"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#0A0F1A" Tag="#0A0F1A" Margin="7,0,0,0" Click="BgPreset_Click" ToolTip="Obsidiana Tática (#0A0F1A)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#07182B" Tag="#07182B" Click="BgPreset_Click" ToolTip="Azul Noite Fortnite (#07182B)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#150926" Tag="#150926" Click="BgPreset_Click" ToolTip="Roxo Tempestade (#150926)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#161008" Tag="#161008" Click="BgPreset_Click" ToolTip="Âmbar Pirata (#161008)"/>
+                                            <Button Style="{StaticResource Swatch}" Background="#000000" Tag="#000000" Click="BgPreset_Click" ToolTip="Preto Puro (#000000)"/>
+                                        </WrapPanel>
+
+                                        <TextBlock Grid.Row="3" Text="Título" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                                        <TextBox x:Name="TitleBox" Grid.Row="3" Grid.Column="1" Margin="0,8,0,0" Padding="9,4.5" FontSize="12" TextChanged="Title_Changed"
+                                                 ToolTip="Exibido quando a opção 'Cabeçalho com título e status' está ativada"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Section 4: Modular Metrics & Smart Behavior -->
+                            <Border Style="{StaticResource Panel}" Margin="0,11,0,0" Padding="16,12">
+                                <StackPanel>
+                                    <TextBlock Text="Informações Visíveis &amp; Comportamento em Partida" Style="{StaticResource SectionTitle}" Margin="0,0,0,8"/>
+
+                                    <UniformGrid x:Name="OverlayChecksUniformGrid" Columns="2">
+                                        <CheckBox x:Name="HudShowIconCheck" Content="Ícone de baú + luz de status" Margin="0,0,8,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowLiveCheck" Content="Baús nesta partida (Ao vivo)" Margin="0,0,0,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowSeasonCheck" Content="Total acumulado na temporada" Margin="0,0,8,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowTokenCheck" Content="Chance do Token Loja Pirata" Margin="0,0,0,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowAvgCheck" Content="Média de baús por partida" Margin="0,0,8,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowLastCheck" Content="Baús da última partida" Margin="0,0,0,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowBestCheck" Content="Recorde pessoal de baús" Margin="0,0,8,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowHourCheck" Content="Cronômetro Hora do Tesouro" Margin="0,0,0,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowLabelsCheck" Content="Rótulos curtos (PARTIDA, TEMP…)" Margin="0,0,8,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudShowHeaderCheck" Content="Cabeçalho com título e status" Margin="0,0,0,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudAccentBarCheck" Content="Barra lateral luminosa Fortnite" Margin="0,0,8,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudTextShadowCheck" Content="Sombra projetada de leitura" Margin="0,0,0,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudPulseCheck" Content="Animação +1 ao abrir novo baú" Margin="0,0,8,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                        <CheckBox x:Name="HudDimIdleCheck" Content="Suavizar brilho fora de partida" Margin="0,0,0,7" FontSize="12" Click="OverlayToggleOption_Changed"/>
+                                    </UniformGrid>
+
+                                    <Border Height="1" Background="{StaticResource Stroke}" Margin="0,2,0,8"/>
+                                    <CheckBox x:Name="HudHideIdleCheck" Content="Ocultar automaticamente no Lobby (aparecer apenas durante a partida quando fixado 🔒)"
+                                              FontSize="12" Click="OverlayToggleOption_Changed"
+                                              ToolTip="Quando fixado (Ctrl+Shift+L), o HUD fica 100% invisível fora da partida e surge sozinho assim que você abre o 1º baú"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- ==================== FOOTER ==================== -->
+                <Grid Grid.Row="2" Margin="2,8,2,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="6" Height="6" Fill="{StaticResource Gold}" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                        <TextBlock x:Name="FooterText" Text="master-yks" Foreground="{StaticResource Steel}" FontWeight="SemiBold" FontSize="11.5"/>
+                        <TextBlock x:Name="FooterSummaryText" Text="" Style="{StaticResource Label}" FontSize="11.5" Margin="10,0,12,0" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <ProgressBar x:Name="ScanProgressBar" Width="120" Height="5" Margin="0,0,10,0"
+                                     Minimum="0" Maximum="100" Value="0"
+                                     Foreground="{StaticResource Gold}" Background="{StaticResource CardAlt}" BorderThickness="0"
+                                     Visibility="Collapsed"/>
+                        <TextBlock x:Name="StatusText" Text="" Style="{StaticResource Label}" FontSize="11.5" TextTrimming="CharacterEllipsis" MaxWidth="460"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

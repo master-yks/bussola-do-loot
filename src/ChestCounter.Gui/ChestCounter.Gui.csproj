@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ApplicationManifest>..\app.manifest</ApplicationManifest>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>BussolaDoLoot</AssemblyName>
+    <Product>Bússola do Loot</Product>
+    <AssemblyTitle>Bússola do Loot</AssemblyTitle>
+    <Authors>master-yks</Authors>
+    <Company>master-yks</Company>
+    <RootNamespace>ChestCounter.Gui</RootNamespace>
+    <ApplicationIcon>Assets/token.ico</ApplicationIcon>
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <!-- Keep WinForms off the implicit usings so WPF's Button/Color/ColorConverter stay unambiguous. -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets/token.ico" />
+    <Resource Include="Assets/Island/*" />
+    <Resource Include="Assets/Island/Ortho/*.jpg" />
+    <Resource Include="../Assets/chest.png" Link="chest.png" />
+    <Resource Include="Assets/*.png" />
+    <ProjectReference Include="..\ChestCounter.Core\ChestCounter.Core.csproj" />
+    <ProjectReference Include="..\ChestCounter.Ocr\ChestCounter.Ocr.csproj" />
+  </ItemGroup>
+
+</Project>

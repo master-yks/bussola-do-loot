@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="ChestCounter.Core/ChestCounter.Core.csproj" />
+  <Project Path="ChestCounter.Gui/ChestCounter.Gui.csproj" />
+  <Project Path="ChestCounter.Live/ChestCounter.Live.csproj" />
+  <Project Path="ChestCounter.Ocr/ChestCounter.Ocr.csproj" />
+  <Folder Name="/Tests/">
+    <Project Path="../tests/ChestCounter.Checks/ChestCounter.Checks.csproj" />
+  </Folder>
+</Solution>

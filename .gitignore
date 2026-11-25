@@ -1,0 +1,46 @@
+# .NET build output
+bin/
+obj/
+*.user
+
+# IDE
+.vs/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Replays should never be committed (they're large and personal)
+*.replay
+shot*.png
+
+# Release build output
+publish/
+*.zip
+
+# Local build, verification and release artifacts
+/target/
+/artifacts/
+/publish-win-x64/
+/cmds/
+*.dump
+*_wpftmp.csproj
+
+# Preferências, diagnósticos e exportações locais
+.env
+.env.*
+*.pfx
+*.pem
+*.key
+*.lnk
+*.log
+*.csv
+*.pdb
+*.dmp
+stats.json
+app.json
+overlay.json
+live_session.json
+rotas/
+.ferramentas/

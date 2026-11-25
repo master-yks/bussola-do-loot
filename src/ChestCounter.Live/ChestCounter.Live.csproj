@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ApplicationManifest>..\app.manifest</ApplicationManifest>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>../ChestCounter.Gui/Assets/token.ico</ApplicationIcon>
+    <Product>Bússola do Loot</Product>
+    <Authors>master-yks</Authors>
+    <Company>master-yks</Company>
+    <AssemblyName>chestcounter-live</AssemblyName>
+    <RootNamespace>ChestCounter.Live</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChestCounter.Core\ChestCounter.Core.csproj" />
+    <ProjectReference Include="..\ChestCounter.Ocr\ChestCounter.Ocr.csproj" />
+  </ItemGroup>
+
+</Project>
