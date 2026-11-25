@@ -22,6 +22,10 @@ if (args.Length > 0)
     var again = scanner.Scan(files, realStats);
     Console.WriteLine($"Files={files.Count} matches={realStats.Matches} unfinished={scan.AbandonedCrash + scan.ActiveRecording} skipped={scan.SkippedMode} failed={scan.Failed}");
     Console.WriteLine($"Self={realStats.YourChests} mates={realStats.SquadChests - realStats.YourChests} unknown (all teams)={realStats.Records.Sum(r => r.Unattributed)}");
+    Check(realStats.Records.Select(r => r.MatchId).Distinct(StringComparer.OrdinalIgnoreCase).Count() == realStats.Matches,
+        "unique match IDs in history");
+    Check(realStats.Records.All(r => r.You >= 0 && r.UntypedChests >= 0 && r.YourChestKinds.Values.All(n => n >= 0)),
+        "typed chest counts fit within each personal total");
     Check(scan.Failed == 0 && realStats.Matches > 0, "read real replays");
     Check(again.NewMatches == 0 && again.Parsed == 0 && again.Failed == 0, "warm scan is idempotent");
     foreach (var record in realStats.Records.Where(r => r.Mates.Count > 0 && r.Source == "replay").Take(3))
@@ -161,6 +165,14 @@ Check(counts.You == 3 && counts.YourChestKinds.Count == 2
     "typed personal counts exclude teammates and repeated observations");
 Check(new MatchRecord { You = 9 }.UntypedChests == 9, "historical and OCR totals keep unknown type");
 
+ChestChannel(42, "guid:500", 90);
+Event(42, 90, false, false, null);
+Event(42, 90.1f, true, false, 101);
+Event(42, 90.2f, true, false, 101);
+ChestChannel(43, "guid:501", 91);
+Event(43, 91, true, false, 101);
+Check(reader.Classify(replay).You == counts.You + 1, "fast observed opening counts once, initial transient snapshot stays excluded");
+
 var log = new FortniteLogWatcher();
 int queued = 0;
 log.PlayAgainTriggered += _ => queued++;
@@ -189,6 +201,12 @@ Check(!reused.RemovePendingPlayAgain("slot.replay", "session-skipped") && reused
     "skipping another mode preserves a pending match with a different session ID");
 Check(reused.RemovePendingPlayAgain("slot.replay", "session-older") && reused.Matches == 1,
     "skipping the matching session removes its estimate only");
+
+reused.AddMatch(new MatchChestCounts { MatchId = "session-rescued", You = 3 }, "ocr-rescue", "slot.replay");
+Check(!reused.HasReplayRecord("slot.replay", "next-session"), "rotated filename cannot suppress a new rescue");
+Check(reused.HasReplayRecord("renamed.replay", "session-rescued"), "rescue identified by session after rename");
+Check(reused.RemoveEstimates("slot.replay", "session-rescued") && reused.Matches == 1 && reused.YourChests == 2,
+    "excluded mode removes rescued OCR and preserves confirmed session");
 
 var namesakes = new LifetimeStats();
 namesakes.AddMatch(new MatchChestCounts { MatchId = "one", Mates = [

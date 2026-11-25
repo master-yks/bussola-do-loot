@@ -17,7 +17,7 @@ O mapa e o planejador de rotas também funcionam offline. Os dados pessoais
 ficam em %APPDATA%\ChestCounter. Exportações de histórico podem incluir
 nomes de colegas e identificadores de partidas.
 
-Opcionalmente, execute Criar atalhos.cmd para criar os atalhos do Windows.
+Opcionalmente, execute Criar atalhos.cmd para criar o atalho na Área de Trabalho.
 Para desinstalar, feche o app e exclua a pasta extraída e os atalhos que criou.
 O histórico permanece em %APPDATA%\ChestCounter para futuras instalações.
 

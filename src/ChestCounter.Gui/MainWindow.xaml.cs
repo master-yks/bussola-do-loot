@@ -1677,7 +1677,10 @@ public partial class MainWindow : Window
         int liveAdd = Math.Max(0, _liveCount ?? 0);
 
         var (seasonYou, seasonSquad, seasonMatches, _) = GetLiveSeasonTotals();
-        SeasonHeroTotalText.Text = seasonYou.ToString("N0");
+        long seasonEstimate = liveAdd + _stats.Records
+            .Where(r => r.Time >= ChestCounterService.SeasonStartUtc && r.Source != "replay").Sum(r => (long)r.You);
+        SeasonHeroTotalText.Text = (seasonEstimate > 0 ? "≈ " : "") + seasonYou.ToString("N0");
+        SeasonHeroTotalText.ToolTip = $"{seasonYou - seasonEstimate:N0} baús atribuídos a você nos replays · {seasonEstimate:N0} estimados";
 
         if (_liveCount is { } lc)
         {
@@ -1704,7 +1707,8 @@ public partial class MainWindow : Window
 
         PeriodLabelText.Text = SelectedPeriodLabel();
         AvgYouText.Text = avg.ToString("F1");
-        YourTotalText.Text = periodTotal.ToString("N0");
+        long estimated = liveAdd + recs.Where(r => r.Source != "replay").Sum(r => (long)r.You);
+        YourTotalText.Text = (estimated > 0 ? "≈ " : "") + periodTotal.ToString("N0");
         MatchesText.Text = _liveCount is > 0
             ? (n == 0 ? "em partida ao vivo" : $"em {n:N0} part. (+{_liveCount} ao vivo)")
             : (n == 1 ? "em 1 partida" : $"em {n:N0} partidas");
@@ -1726,7 +1730,7 @@ public partial class MainWindow : Window
             KpiAvgCard.ToolTip = "Nenhuma partida concluída no período selecionado.";
         }
 
-        KpiPeriodCard.ToolTip = $"{SelectedPeriodLabel()}: {periodTotal:N0} baús abertos por você\nBaús visíveis com esquadrão no período: ≥ {recs.Sum(r => (long)r.SquadVisibleChests) + liveAdd:N0}";
+        KpiPeriodCard.ToolTip = $"{SelectedPeriodLabel()}: {periodTotal:N0} baús pessoais · {periodTotal - estimated:N0} por replay e {estimated:N0} estimados\nBaús visíveis com esquadrão no período: ≥ {recs.Sum(r => (long)r.SquadVisibleChests) + liveAdd:N0}";
 
         LastGameText.Text = n > 0 ? recs[^1].You.ToString() : "—";
         LastMatchText.Text = n > 0

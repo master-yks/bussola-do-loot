@@ -9,6 +9,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>BussolaDoLoot</AssemblyName>
+    <Version>1.1.0</Version>
     <Product>Bússola do Loot</Product>
     <AssemblyTitle>Bússola do Loot</AssemblyTitle>
     <Authors>master-yks</Authors>

@@ -7,7 +7,7 @@
 ## Baixar e começar
 
 1. Na página do repositório, abra **Releases** e baixe **BussolaDoLoot-win-x64.zip** em **Assets**. Os arquivos chamados *Source code* contêm o código para desenvolvedores.
-2. Extraia o ZIP inteiro e abra **BussolaDoLoot.exe**. O pacote inclui o runtime .NET. Se quiser um atalho na Área de Trabalho e no menu Iniciar, execute **Criar atalhos.cmd**.
+2. Extraia o ZIP inteiro e abra **BussolaDoLoot.exe**. O pacote inclui o runtime .NET. Se quiser um atalho na Área de Trabalho, execute **Criar atalhos.cmd**.
 3. Ative a gravação de replays no Fortnite e conclua uma partida pública de **Battle Royale** ou **Construção Zero**. A sincronização também pode ser iniciada pelo botão **Sincronizar** do painel.
 4. Em **Visão Geral**, escolha o período e veja seus baús por tipo. No **Histórico**, passe o mouse sobre uma partida para conferir o que entrou na contagem.
 
@@ -15,7 +15,7 @@
 
 ![Visão Geral da Bússola do Loot com oito partidas fictícias e distribuição de baús](docs/imagens/visao-geral.png)
 
-*Exemplo com dados fictícios. O símbolo ≥ mostra o mínimo de baús do esquadrão que apareceu no seu replay. Aberturas distantes podem ficar fora da gravação.*
+*Exemplo com dados fictícios. O símbolo ≈ indica que o total pessoal inclui estimativas. Passe o mouse sobre o total para separar as aberturas atribuídas pelos replays das estimadas. O símbolo ≥ mostra o mínimo de baús do esquadrão que apareceu no seu replay. Aberturas distantes podem ficar fora da gravação.*
 
 ## Planejar uma rota
 

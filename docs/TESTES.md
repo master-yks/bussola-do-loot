@@ -1,6 +1,6 @@
 # Desenvolvimento e promoção de melhorias
 
-Abra **Abrir testes.cmd** na raiz desta cópia. A configuração de compilação `Testes` identifica a janela, usa `%APPDATA%\ChestCounter-Testes` para histórico, rotas e preferências e atende o OBS em `http://localhost:7778/`. Os botões da janela controlam o HUD de testes. Os atalhos globais ficam reservados à edição estável. Os replays do Fortnite servem de entrada para ambas.
+Para desenvolvimento, execute `dotnet run --project src/ChestCounter.Gui -c Testes` na raiz desta cópia com o SDK .NET 10. A configuração de compilação `Testes` identifica a janela, usa `%APPDATA%\ChestCounter-Testes` para histórico, rotas e preferências e atende o OBS em `http://localhost:7778/`. Os botões da janela controlam o HUD de testes. Os atalhos globais ficam reservados à edição estável. Os replays do Fortnite servem de entrada para ambas.
 
 A pasta `Testes` usa a branch `testes`. A pasta oficial `Chest Tracker\Repositorio` usa `main`. São worktrees do mesmo repositório. Para localizar ambas, execute `git worktree list`.
 

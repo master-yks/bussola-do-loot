@@ -306,7 +306,10 @@ public sealed partial class ChestScanReader : ReplayReader
 
         if (!opened) return;
         bool stale = Now - _channelOpenAt[channelIndex] < 0.5f;
-        if (stale && !StableKey(key) && !_lastOpening.ContainsKey(key))
+        // An initial open snapshot with a transient GUID may repeat a chest from another channel.
+        // A recorded closed-to-open transition is evidence even during the first half second.
+        bool observedClosed = _channelSearched.TryGetValue(channelIndex, out bool searched) && !searched;
+        if (stale && !observedClosed && !StableKey(key) && !_lastOpening.ContainsKey(key))
         {
             _channelSearched[channelIndex] = true;
             return;

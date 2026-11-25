@@ -6,7 +6,7 @@ Aplicativo de Windows para acompanhar seus baús e os baús visíveis dos colega
 
 ## Como usar
 
-1. Extraia o ZIP inteiro em uma pasta e abra `BussolaDoLoot.exe`. Para adicionar o token frontal à Área de Trabalho e ao menu Iniciar, execute `Criar atalhos.cmd` na pasta extraída. O pacote de Windows x64 inclui o runtime .NET.
+1. Extraia o ZIP inteiro em uma pasta e abra `BussolaDoLoot.exe`. Para criar o atalho na Área de Trabalho, execute `Criar atalhos.cmd` na pasta extraída. O pacote de Windows x64 inclui o runtime .NET.
 2. Ative a gravação de replays no Fortnite. O painel sincroniza os arquivos em `%LOCALAPPDATA%\FortniteGame\Saved\Demos`.
 3. Para ver uma estimativa pessoal durante a partida, deixe os avisos de EXP visíveis, use janela sem bordas e habilite o OCR de um idioma compatível no Windows. A conferência dos colegas acontece ao finalizar o replay.
 4. Em **Visão Geral → Seus baús por tipo**, escolha 24 horas, 7 dias, temporada ou todo o histórico. Cada cartão mostra quantas aberturas pessoais o replay atribuiu àquela família.

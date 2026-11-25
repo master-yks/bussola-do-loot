@@ -229,7 +229,7 @@ public sealed class ReplayScanner
                 case OutcomeKind.SkippedMode:
                     run.Parsed++;
                     stats.ScannedFiles.Add(item.Key);
-                    stats.RemovePendingPlayAgain(fileName, item.Counts?.MatchId);
+                    stats.RemoveEstimates(fileName, item.Counts?.MatchId);
                     run.SkippedMode++;
                     run.SettledFiles.Add(fileName);
                     break;
@@ -247,7 +247,7 @@ public sealed class ReplayScanner
                     if (liveJournal != null
                         && !liveJournal.FinalizedViaPlayAgain
                         && (string.IsNullOrWhiteSpace(liveJournal.Playlist) || IsCountedPlaylist(liveJournal.Playlist))
-                        && !stats.HasReplayRecord(fileName)
+                        && !stats.HasReplayRecord(fileName, liveJournal.SessionId)
                         && string.Equals(liveJournal.ReplayFileName, fileName, StringComparison.OrdinalIgnoreCase)
                         && liveJournal.LiveChests > 0)
                     {

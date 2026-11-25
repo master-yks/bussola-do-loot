@@ -132,7 +132,7 @@ public static class LiveSessionJournal
 // Per-match history, persisted to disk and only ever appended to.
 public sealed class LifetimeStats
 {
-    public const int CurrentVersion = 11;   // Enrich available replays with personal counts by container.
+    public const int CurrentVersion = 12;   // Reconcile provisional matches and replay observed closed-to-open transitions.
 
     public int Version { get; set; } = CurrentVersion;
     public List<MatchRecord> Records { get; set; } = new();
@@ -239,27 +239,31 @@ public sealed class LifetimeStats
         return true;
     }
 
-    public bool HasReplayRecord(string replayFileName) =>
-        !string.IsNullOrEmpty(replayFileName) && Records.Any(r =>
-            (!string.IsNullOrEmpty(r.ReplayFile) && string.Equals(r.ReplayFile, replayFileName, StringComparison.OrdinalIgnoreCase))
-            || string.Equals(r.MatchId, "play-again:" + replayFileName, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(r.MatchId, "ocr-rescue:" + replayFileName, StringComparison.OrdinalIgnoreCase));
-
-    public bool RemovePendingPlayAgain(string replayFileName, string? sessionId = null)
+    private static bool MatchesSession(MatchRecord record, string fileName, string? sessionId)
     {
-        return Records.RemoveAll(r =>
+        if (!string.IsNullOrWhiteSpace(sessionId) &&
+            string.Equals(record.MatchId, sessionId, StringComparison.OrdinalIgnoreCase)) return true;
+        if (string.IsNullOrEmpty(fileName)) return false;
+        return string.Equals(record.MatchId, "play-again:" + fileName, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(record.MatchId, "ocr-rescue:" + fileName, StringComparison.OrdinalIgnoreCase)
+            || (string.IsNullOrWhiteSpace(sessionId) &&
+                string.Equals(record.ReplayFile, fileName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public bool HasReplayRecord(string replayFileName, string? sessionId = null) =>
+        Records.Any(r => MatchesSession(r, replayFileName, sessionId));
+
+    public bool RemovePendingPlayAgain(string replayFileName, string? sessionId = null) =>
+        RemoveEstimates(replayFileName, sessionId, includeRescued: false);
+
+    public bool RemoveEstimates(string fileName, string? sessionId, bool includeRescued = true) =>
+        Records.RemoveAll(r =>
         {
-            if (r.Source != "play-again") return false;
-            bool sameSession = !string.IsNullOrEmpty(sessionId)
-                && string.Equals(r.MatchId, sessionId, StringComparison.OrdinalIgnoreCase);
-            bool sameFile = !string.IsNullOrEmpty(replayFileName)
-                && (string.Equals(r.MatchId, "play-again:" + replayFileName, StringComparison.OrdinalIgnoreCase)
-                    || (string.IsNullOrEmpty(sessionId) && string.Equals(r.ReplayFile, replayFileName, StringComparison.OrdinalIgnoreCase)));
-            if (!sameSession && !sameFile) return false;
+            bool provisional = r.Source == "play-again" || (includeRescued && r.Source == "ocr-rescue");
+            if (!provisional || !MatchesSession(r, fileName, sessionId)) return false;
             _ids?.Remove(r.MatchId);
             return true;
         }) > 0;
-    }
 
     // Who you play with most, by matches together.
     public List<MateTotal> TopMates(DateTime? since, int take) =>
