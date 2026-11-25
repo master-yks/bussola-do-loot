@@ -31,6 +31,7 @@
     <Resource Include="Assets/Island/Ortho/*.jpg" />
     <Resource Include="../Assets/chest.png" Link="chest.png" />
     <Resource Include="Assets/*.png" />
+    <Resource Include="Assets/Studio/*.jpg" />
     <ProjectReference Include="..\ChestCounter.Core\ChestCounter.Core.csproj" />
     <ProjectReference Include="..\ChestCounter.Ocr\ChestCounter.Ocr.csproj" />
   </ItemGroup>

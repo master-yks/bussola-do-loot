@@ -864,46 +864,41 @@
                                                 BorderThickness="1" CornerRadius="5" Padding="7,2" VerticalAlignment="Center">
                                             <TextBlock x:Name="OverlayActivePresetBadgeText" Text="⚡ Fortnite Tático" Foreground="{StaticResource Gold}" FontSize="10.5" FontWeight="Bold"/>
                                         </Border>
-                                        <TextBlock Text="Prévia Ao Vivo no Jogo" Style="{StaticResource SectionTitle}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Prévia do contador" Style="{StaticResource SectionTitle}" VerticalAlignment="Center"/>
                                     </DockPanel>
 
                                     <!-- Simulated Game Scene Viewport -->
-                                    <Border x:Name="PreviewViewportBorder" Height="186" CornerRadius="11" BorderBrush="{StaticResource StrokeLit}" BorderThickness="1" ClipToBounds="True">
+                                    <Border x:Name="PreviewViewportBorder" Height="216" CornerRadius="11" BorderBrush="{StaticResource StrokeLit}" BorderThickness="1" ClipToBounds="True">
                                         <Grid>
-                                            <Canvas x:Name="PreviewSceneCanvas" IsHitTestVisible="False" SizeChanged="PreviewSceneCanvas_SizeChanged"/>
-
-                                            <!-- Scene Selector Pills inside Top-Right of Viewport -->
-                                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
-                                                    Background="#B8080B12" BorderBrush="#38FFFFFF" BorderThickness="1" CornerRadius="7" Padding="2">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <RadioButton x:Name="SceneSkyRadio" Style="{StaticResource Pill}" Content="☀ Céu" Tag="0" GroupName="bgscene" Padding="7,3" FontSize="10.5" IsChecked="True" Checked="PreviewBackdrop_Checked"
-                                                                 ToolTip="Testar visibilidade contra o céu azul claro do Fortnite"/>
-                                                    <RadioButton x:Name="SceneSnowRadio" Style="{StaticResource Pill}" Content="❄ Neve" Tag="1" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
-                                                                 ToolTip="Teste extremo de contraste em bioma branco de neve"/>
-                                                    <RadioButton x:Name="SceneIslandRadio" Style="{StaticResource Pill}" Content="🌿 Ilha" Tag="2" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
-                                                                 ToolTip="Terreno de combate verde e dourado"/>
-                                                    <RadioButton x:Name="SceneNightRadio" Style="{StaticResource Pill}" Content="🌙 Noite" Tag="3" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
-                                                                 ToolTip="Ambiente noturno / caverna escura"/>
-                                                </StackPanel>
-                                            </Border>
-
                                             <!-- Actual 1:1 Rendered OverlayHudView -->
-                                            <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,34,14,24">
+                                            <Viewbox StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,14,14,30">
                                                 <local:OverlayHudView x:Name="PreviewHudView"/>
                                             </Viewbox>
 
                                             <!-- Subtle Viewport Hint -->
                                             <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8,0,8,7"
                                                     Background="#9E07090F" CornerRadius="5" Padding="7,2" IsHitTestVisible="False">
-                                                <TextBlock x:Name="PreviewHintText" Text="Simulação real 1:1 · teste em Céu e Neve para conferir a leitura"
+                                                <TextBlock x:Name="PreviewHintText" Text="Simulação em partida"
                                                            Foreground="#DCE4F0" FontSize="10" TextTrimming="CharacterEllipsis"/>
                                             </Border>
                                         </Grid>
                                     </Border>
 
-                                    <!-- Simulation & Quick HUD Controls -->
+                                    <DockPanel Margin="0,8,0,0" LastChildFill="False">
+                                        <TextBlock Text="Cenário" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton x:Name="SceneSkyRadio" Style="{StaticResource Pill}" Content="Céu" Tag="0" GroupName="bgscene" Padding="7,3" FontSize="10.5" IsChecked="True" Checked="PreviewBackdrop_Checked"
+                                                         ToolTip="Testar visibilidade contra o céu azul claro do Fortnite"/>
+                                            <RadioButton x:Name="SceneSnowRadio" Style="{StaticResource Pill}" Content="Neve" Tag="1" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
+                                                         ToolTip="Teste extremo de contraste em bioma branco de neve"/>
+                                            <RadioButton x:Name="SceneIslandRadio" Style="{StaticResource Pill}" Content="Ilha" Tag="2" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
+                                                         ToolTip="Terreno de combate verde e dourado"/>
+                                            <RadioButton x:Name="SceneNightRadio" Style="{StaticResource Pill}" Content="Noite" Tag="3" GroupName="bgscene" Padding="7,3" FontSize="10.5" Checked="PreviewBackdrop_Checked"
+                                                         ToolTip="Ambiente noturno / caverna escura"/>
+                                        </StackPanel>
+                                    </DockPanel>
                                     <UniformGrid Columns="2" Margin="0,9,0,0">
-                                        <Button x:Name="PreviewSimPulseButton" Content="✨ Simular +1 Baú" Style="{StaticResource Quiet}" Margin="0,0,4,0" Padding="8,5.5" FontSize="11.5"
+                                        <Button x:Name="PreviewSimPulseButton" Content="Simular +1 baú" Style="{StaticResource Primary}" Margin="0,0,4,0" Padding="8,5.5" FontSize="11.5"
                                                 Click="PreviewSimPulseButton_Click"
                                                 ToolTip="Simula a abertura de um baú na partida para testar o contador ao vivo e a animação +1"/>
                                         <Button x:Name="PreviewToggleStateButton" Content="Modo Prévia: Ao Vivo" Style="{StaticResource Quiet}" Margin="4,0,0,0" Padding="8,5.5" FontSize="11.5"
@@ -932,7 +927,7 @@
                                 <StackPanel>
                                     <DockPanel Margin="0,0,0,8">
                                         <TextBlock x:Name="OverlayCoordsText" DockPanel.Dock="Right" Text="Posição livre" Style="{StaticResource Label}" FontSize="11" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Posição Rápida no Fortnite" Style="{StaticResource SectionTitle}"/>
+                                        <TextBlock Text="Posição na tela" Style="{StaticResource SectionTitle}"/>
                                     </DockPanel>
 
                                     <UniformGrid Columns="2">
@@ -985,12 +980,12 @@
                             <Border Style="{StaticResource Panel}" Padding="16,12">
                                 <StackPanel>
                                     <DockPanel Margin="0,0,0,8">
-                                        <Button DockPanel.Dock="Right" Content="↺ Restaurar Padrão Fortnite" Style="{StaticResource Quiet}"
+                                        <Button DockPanel.Dock="Right" Content="Restaurar padrão" Style="{StaticResource Quiet}"
                                                 Padding="9,4" FontSize="11" Click="ResetDefaultOverlayStyle_Click"
                                                 ToolTip="Restaura o estilo padrão recomendado (Fortnite Tático Transparente)"/>
                                         <StackPanel>
-                                            <TextBlock Text="Galeria de Estilos (9 Presets)" Style="{StaticResource SectionTitle}"/>
-                                            <TextBlock Text="Escolha uma estética pronta ou personalize cada detalhe abaixo como preferir" Style="{StaticResource Label}" FontSize="11"/>
+                                            <TextBlock Text="Estilos do contador" Style="{StaticResource SectionTitle}"/>
+                                            <TextBlock Text="Selecione um estilo para testar na prévia." Style="{StaticResource Label}" FontSize="11"/>
                                         </StackPanel>
                                     </DockPanel>
 
@@ -1001,7 +996,7 @@
                             <!-- Section 2: Layout, Frame, Font & Transparency Sliders -->
                             <Border Style="{StaticResource Panel}" Margin="0,11,0,0" Padding="16,12">
                                 <StackPanel>
-                                    <TextBlock Text="Formato, Moldura &amp; Visibilidade Transparente" Style="{StaticResource SectionTitle}" Margin="0,0,0,9"/>
+                                    <TextBlock Text="Formato e transparência" Style="{StaticResource SectionTitle}" Margin="0,0,0,9"/>
 
                                     <!-- Layout Mode -->
                                     <Grid Margin="0,0,0,7">

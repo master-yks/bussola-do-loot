@@ -1118,47 +1118,26 @@ public partial class MainWindow : Window
         PresetCardsGrid.Children.Clear();
         _presetRadios.Clear();
 
+        var snapshot = BuildOverlayStatsSnapshot();
         foreach (var p in OverlayPresets.All)
         {
             var stack = new StackPanel();
-            var top = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-
-            var dot1 = new Border
+            var sample = new OverlayHudView { IsPreview = true, IsHitTestVisible = false };
+            sample.ApplySettings(p.Create());
+            sample.SetStats(snapshot);
+            sample.SetLive(18, allowPulse: false);
+            var tile = new Border
             {
-                Width = 9, Height = 9, CornerRadius = new CornerRadius(4.5),
-                Background = HexBrush(p.SwatchHex, ResBrush("Gold")),
-                Margin = new Thickness(0, 0, 3, 0),
+                Height = 52, Padding = new Thickness(6), CornerRadius = new CornerRadius(5),
+                Background = new LinearGradientBrush(Color.FromRgb(61, 83, 102), Color.FromRgb(21, 33, 46), 25),
+                Child = new Viewbox { Child = sample, StretchDirection = StretchDirection.DownOnly }
             };
-            var dot2 = new Border
+            stack.Children.Add(tile);
+            stack.Children.Add(new TextBlock
             {
-                Width = 7, Height = 7, CornerRadius = new CornerRadius(3.5),
-                Background = HexBrush(p.SecondaryHex, ResBrush("Cyan")),
-                Margin = new Thickness(0, 0, 6, 0),
-                Opacity = 0.9,
-            };
-            var title = new TextBlock
-            {
-                Text = p.Name,
-                Foreground = ResBrush("Text"),
-                FontSize = 11.8,
-                FontWeight = FontWeights.SemiBold,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-            };
-            top.Children.Add(dot1);
-            top.Children.Add(dot2);
-            top.Children.Add(title);
-
-            var sub = new TextBlock
-            {
-                Text = p.Subtitle,
-                Foreground = ResBrush("Muted"),
-                FontSize = 10.2,
-                Margin = new Thickness(0, 2.5, 0, 0),
-                TextTrimming = TextTrimming.CharacterEllipsis,
-            };
-
-            stack.Children.Add(top);
-            stack.Children.Add(sub);
+                Text = p.Name, Foreground = ResBrush("Text"), FontWeight = FontWeights.SemiBold,
+                FontSize = 12, Margin = new Thickness(0, 5, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis
+            });
 
             var rb = new RadioButton
             {
@@ -1168,6 +1147,7 @@ public partial class MainWindow : Window
                 Content = stack,
                 ToolTip = $"{p.Name}\n{p.Subtitle}",
             };
+            System.Windows.Automation.AutomationProperties.SetName(rb, p.Name);
             rb.Click += (_, _) => ApplyOverlayPresetInternal(p, persist: true);
 
             _presetRadios[p.Id] = rb;
@@ -1322,20 +1302,20 @@ public partial class MainWindow : Window
         if (PreviewHudView == null) return;
         PreviewHudView.ApplySettings(_overlay);
         PreviewHudView.SetStats(BuildOverlayStatsSnapshot());
-        int? simLive = _liveCount ?? (_previewSimLive ? _previewSimCount : null);
+        int? simLive = _previewSimLive ? _previewSimCount : null;
         PreviewHudView.SetLive(simLive, allowPulse);
 
         if (PreviewToggleStateButton != null)
         {
             bool isLiveShown = simLive != null;
-            PreviewToggleStateButton.Content = isLiveShown ? "Modo Prévia: Ao Vivo" : "Modo Prévia: Espera";
+            PreviewToggleStateButton.Content = isLiveShown ? "Mudar para lobby" : "Mudar para partida";
             PreviewToggleStateButton.Foreground = ResBrush(isLiveShown ? "Emerald" : "Steel");
         }
         if (PreviewHintText != null)
         {
             PreviewHintText.Text = (_overlay.HideWhenIdle && simLive == null)
-                ? "Ocultar no Lobby ativo: no jogo ficará 100% invisível até o 1º baú!"
-                : "Prévia fiel 1:1 · alterne entre ☀ Céu, ❄ Neve e 🌙 Noite para testar contraste";
+                ? "Lobby · contador oculto no jogo"
+                : simLive == null ? "Lobby · em espera" : "Em partida";
         }
     }
 
@@ -1376,72 +1356,19 @@ public partial class MainWindow : Window
         RebuildPreviewSceneBackdrop();
     }
 
-    private void PreviewSceneCanvas_SizeChanged(object sender, SizeChangedEventArgs e) =>
-        RebuildPreviewSceneBackdrop();
-
     private void RebuildPreviewSceneBackdrop()
     {
-        if (PreviewSceneCanvas == null || PreviewViewportBorder == null) return;
-        PreviewSceneCanvas.Children.Clear();
-        double w = PreviewSceneCanvas.ActualWidth;
-        double h = PreviewSceneCanvas.ActualHeight;
-        if (w <= 10 || h <= 10) return;
-
-        switch (_previewBackdropIndex)
+        if (PreviewViewportBorder == null) return;
+        string scene = _previewBackdropIndex switch { 1 => "snow", 2 => "island", 3 => "night", _ => "sky" };
+        if (Equals(PreviewViewportBorder.Tag, scene)) return;
+        var uri = new Uri($"pack://application:,,,/Assets/Studio/{scene}.jpg");
+        var background = new ImageBrush(new System.Windows.Media.Imaging.BitmapImage(uri))
         {
-            case 1: // Snow Biome (Extreme Bright White/Ice Legibility Test)
-            {
-                PreviewViewportBorder.Background = new LinearGradientBrush(
-                    Color.FromRgb(0xC9, 0xDF, 0xF7), Color.FromRgb(0xF9, 0xFC, 0xFF), new Point(0, 0), new Point(0.4, 1));
-                var ridge = new Ellipse { Width = w * 1.1, Height = h * 0.75, Fill = HexBrush("#FFFFFF", Brushes.White), Opacity = 0.85 };
-                Canvas.SetLeft(ridge, -w * 0.15);
-                Canvas.SetTop(ridge, h * 0.52);
-                PreviewSceneCanvas.Children.Add(ridge);
-                break;
-            }
-            case 2: // Combat / Island Greenery
-            {
-                PreviewViewportBorder.Background = new LinearGradientBrush(
-                    Color.FromRgb(0x4D, 0x92, 0xC8), Color.FromRgb(0x2B, 0x56, 0x3A), new Point(0, 0), new Point(0, 1));
-                var hill1 = new Ellipse { Width = w * 0.95, Height = h * 0.9, Fill = HexBrush("#366942", Brushes.Green), Opacity = 0.72 };
-                Canvas.SetLeft(hill1, -w * 0.12);
-                Canvas.SetTop(hill1, h * 0.44);
-                var hill2 = new Ellipse { Width = w * 0.85, Height = h * 0.85, Fill = HexBrush("#22442D", Brushes.DarkGreen), Opacity = 0.85 };
-                Canvas.SetLeft(hill2, w * 0.35);
-                Canvas.SetTop(hill2, h * 0.50);
-                PreviewSceneCanvas.Children.Add(hill1);
-                PreviewSceneCanvas.Children.Add(hill2);
-                break;
-            }
-            case 3: // Night / Storm Interior
-            {
-                PreviewViewportBorder.Background = new LinearGradientBrush(
-                    Color.FromRgb(0x0B, 0x0F, 0x1D), Color.FromRgb(0x1D, 0x11, 0x30), new Point(0, 0), new Point(1, 1));
-                var glow = new Ellipse { Width = 240, Height = 160, Fill = HexBrush("#28A855F7", Brushes.Purple) };
-                Canvas.SetLeft(glow, w * 0.52);
-                Canvas.SetTop(glow, -20);
-                PreviewSceneCanvas.Children.Add(glow);
-                break;
-            }
-            default: // Bright Fortnite Day Sky
-            {
-                PreviewViewportBorder.Background = new LinearGradientBrush(
-                    Color.FromRgb(0x43, 0xA2, 0xF6), Color.FromRgb(0xD6, 0xEE, 0xFF), new Point(0, 0), new Point(0.2, 1));
-                var cloud1 = new Ellipse { Width = 190, Height = 58, Fill = Brushes.White, Opacity = 0.58 };
-                Canvas.SetLeft(cloud1, w * 0.08);
-                Canvas.SetTop(cloud1, h * 0.18);
-                var cloud2 = new Ellipse { Width = 220, Height = 64, Fill = Brushes.White, Opacity = 0.52 };
-                Canvas.SetLeft(cloud2, w * 0.52);
-                Canvas.SetTop(cloud2, h * 0.38);
-                var horizon = new Ellipse { Width = w * 1.3, Height = h * 0.6, Fill = HexBrush("#4C8E58", Brushes.Green), Opacity = 0.45 };
-                Canvas.SetLeft(horizon, -w * 0.15);
-                Canvas.SetTop(horizon, h * 0.78);
-                PreviewSceneCanvas.Children.Add(cloud1);
-                PreviewSceneCanvas.Children.Add(cloud2);
-                PreviewSceneCanvas.Children.Add(horizon);
-                break;
-            }
-        }
+            Stretch = Stretch.UniformToFill
+        };
+        background.Freeze();
+        PreviewViewportBorder.Background = background;
+        PreviewViewportBorder.Tag = scene;
     }
 
     private void HudLayout_Checked(object sender, RoutedEventArgs e)

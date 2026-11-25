@@ -25,7 +25,7 @@ Abra **Mapa → Planejar rota**, escolha **Sugerir percurso de baús** e clique 
 
 ## Mostrar o contador na transmissão
 
-No OBS ou Streamlabs, adicione uma **Fonte de navegador** com a URL `http://localhost:7777/` e mantenha a Bússola aberta no mesmo computador. Na aba **Estúdio do HUD**, escolha o visual e confira a legibilidade antes de transmitir.
+No OBS ou Streamlabs, adicione uma **Fonte de navegador** com a URL `http://localhost:7777/` e mantenha a Bússola aberta no mesmo computador. Na aba **Estúdio do HUD**, compare os nove estilos pelas miniaturas. Alterne entre céu, neve, ilha e noite, simule a abertura de um baú e confira se o contador continua legível.
 
 | Atalho no Windows | Ação |
 | --- | --- |
@@ -33,7 +33,7 @@ No OBS ou Streamlabs, adicione uma **Fonte de navegador** com a URL `http://loca
 | Ctrl + Shift + L | Travar ou liberar a posição do HUD |
 | Ctrl + Shift + M | Alternar o estilo |
 
-![Prévia do contador sobre fundo claro no estúdio de overlay](docs/imagens/overlay.png)
+![Galeria de estilos e prévia do contador sobre o cenário de céu no Estúdio do HUD](docs/imagens/overlay.png)
 
 ## Dados e solução de problemas
 
