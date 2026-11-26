@@ -15,15 +15,18 @@ Thumbs.db
 *.replay
 shot*.png
 
-# Release build output
+# Release and local verification output
 publish/
+publish-win-x64/
+artifacts/
 *.zip
 
-# Local build, verification and release artifacts
-/target/
-/artifacts/
-/publish-win-x64/
-/cmds/
+# Experimental Rust build output
+target/
+experimental/rust-prototype/target/
+
+# Debug dumps
+cmds/
 *.dump
 *_wpftmp.csproj
 

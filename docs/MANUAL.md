@@ -6,7 +6,7 @@ Aplicativo de Windows para acompanhar seus baús e os baús visíveis dos colega
 
 ## Como usar
 
-1. Extraia o ZIP inteiro em uma pasta e abra `BussolaDoLoot.exe`. Para criar o atalho na Área de Trabalho, execute `Criar atalhos.cmd` na pasta extraída. O pacote de Windows x64 inclui o runtime .NET.
+1. Execute o instalador `BussolaDoLoot-Setup-win-x64.exe` (recomendado) ou extraia `BussolaDoLoot-Portable-win-x64.zip` e abra `BussolaDoLoot.exe`. Ambos os formatos já incluem o runtime .NET em executável único. Na versão portátil, `Criar atalhos.cmd` cria o atalho na Área de Trabalho.
 2. Ative a gravação de replays no Fortnite. O painel sincroniza os arquivos em `%LOCALAPPDATA%\FortniteGame\Saved\Demos`.
 3. Para ver uma estimativa pessoal durante a partida, deixe os avisos de EXP visíveis, use janela sem bordas e habilite o OCR de um idioma compatível no Windows. A conferência dos colegas acontece ao finalizar o replay.
 4. Em **Visão Geral → Seus baús por tipo**, escolha 24 horas, 7 dias, temporada ou todo o histórico. Cada cartão mostra quantas aberturas pessoais o replay atribuiu àquela família.
@@ -47,20 +47,21 @@ Baús destruídos entram para um jogador quando a gravação identifica o respon
 
 | Pasta | Conteúdo |
 | --- | --- |
-| `src/` | Aplicativo distribuído, CLI, OCR e núcleo de contagem em .NET |
+| `src/` | Aplicativo distribuído, CLI, OCR e núcleo de contagem em .NET 10 |
 | `lib/` | Leitor de replay e licenças das dependências incorporadas |
-| `tests/ChestCounter.Checks/` | Verificações de contagem, histórico e reprocessamento |
-| `scripts/` | Geração do pacote de Windows |
-| `artifacts/` | Distribuições geradas localmente |
-| `rust/` | Implementação alternativa com armazenamento próprio em `%APPDATA%\ChestCounter-Rust` |
+| `installer/` | Script do instalador Windows (Inno Setup 6) |
+| `tests/` | Verificações de contagem, histórico, reprocessamento e rotas |
+| `scripts/` | Geração do instalador e do pacote portátil de Windows |
+| `artifacts/release/` | Distribuições geradas localmente (`.exe`, `.zip` e `SHA256SUMS.txt`) |
+| `experimental/rust-prototype/` | Protótipo experimental em Rust com armazenamento próprio em `%APPDATA%\ChestCounter-Rust` |
 
-Para compilar e gerar uma distribuição, use o SDK .NET 10 no Windows. A partir da raiz do projeto, execute:
+Para compilar e gerar o instalador e o pacote portátil, use o SDK .NET 10 e o Inno Setup 6 no Windows. A partir da raiz do projeto, execute:
 
 ```powershell
 .\scripts\Publicar-Windows.ps1
 ```
 
-O script executa os testes, publica a interface e a CLI em uma pasta nova e gera um ZIP em `artifacts`. Distribua esse ZIP. Para conferir a contagem diretamente no código:
+O script executa os testes, publica `BussolaDoLoot.exe` e `chestcounter-live.exe` em executável único autossuficiente e grava em `artifacts/release/` o instalador `BussolaDoLoot-Setup-win-x64.exe`, o portátil `BussolaDoLoot-Portable-win-x64.zip` e o `SHA256SUMS.txt`. Para conferir a contagem diretamente no código:
 
 ```powershell
 dotnet run --project tests/ChestCounter.Checks -c Release

@@ -16,6 +16,7 @@
     <Company>master-yks</Company>
     <RootNamespace>ChestCounter.Gui</RootNamespace>
     <ApplicationIcon>Assets/token.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>pt-BR</SatelliteResourceLanguages>
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
 

@@ -5,5 +5,6 @@
   <Project Path="ChestCounter.Ocr/ChestCounter.Ocr.csproj" />
   <Folder Name="/Tests/">
     <Project Path="../tests/ChestCounter.Checks/ChestCounter.Checks.csproj" />
+    <Project Path="../tests/ChestCounter.MapChecks/ChestCounter.MapChecks.csproj" />
   </Folder>
 </Solution>

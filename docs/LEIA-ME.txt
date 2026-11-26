@@ -2,24 +2,27 @@ BÚSSOLA DO LOOT
 Tracker de baús do Fortnite para Windows x64
 Edição por master-yks
 
-1. Extraia o ZIP inteiro em uma pasta. Mantenha os arquivos juntos.
-2. Abra BussolaDoLoot.exe. O runtime .NET já acompanha o aplicativo.
-3. No Fortnite, ative a gravação de replays de Battle Royale. Conclua uma
+1. Instalação recomendada: execute BussolaDoLoot-Setup-win-x64.exe e avance no
+   assistente. O instalador cria os atalhos e o desinstalador no Windows.
+   Na versão portátil (.zip), extraia os arquivos em uma pasta e abra
+   BussolaDoLoot.exe (executável único, já com o runtime .NET incluído).
+2. No Fortnite, ative a gravação de replays de Battle Royale. Conclua uma
    partida pública de Battle Royale ou Construção Zero e clique em Sincronizar.
-4. Confira a Visão Geral e o Histórico. A contagem do esquadrão mostra o
+3. Confira a Visão Geral e o Histórico. A contagem do esquadrão mostra o
    mínimo de aberturas que o seu replay conseguiu observar.
-5. Para estimar os baús durante a partida, deixe os avisos de EXP visíveis,
+4. Para estimar os baús durante a partida, deixe os avisos de EXP visíveis,
    use janela sem bordas e ative o OCR de um idioma compatível no Windows.
-6. Para usar o contador no OBS, abra uma Fonte de navegador com o endereço
+5. Para usar o contador no OBS, abra uma Fonte de navegador com o endereço
    http://localhost:7777/ e mantenha o aplicativo aberto.
 
 O mapa e o planejador de rotas também funcionam offline. Os dados pessoais
 ficam em %APPDATA%\ChestCounter. Exportações de histórico podem incluir
 nomes de colegas e identificadores de partidas.
 
-Opcionalmente, execute Criar atalhos.cmd para criar o atalho na Área de Trabalho.
-Para desinstalar, feche o app e exclua a pasta extraída e os atalhos que criou.
-O histórico permanece em %APPDATA%\ChestCounter para futuras instalações.
+Na versão portátil, execute Criar atalhos.cmd se quiser criar um atalho na
+Área de Trabalho. Para desinstalar a versão instalada, use "Aplicativos
+instalados" do Windows; na portátil, exclua a pasta extraída. O histórico
+permanece em %APPDATA%\ChestCounter para futuras instalações.
 
 As licenças de código e os avisos de terceiros acompanham esta distribuição
 na pasta licencas. Créditos das artes e do mapa estão em MANUAL.md.

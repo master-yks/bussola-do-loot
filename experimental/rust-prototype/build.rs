@@ -12,8 +12,8 @@ fn main() {
                 .is_ok();
         if has_rc {
             let mut res = winresource::WindowsResource::new();
-            res.set_icon("src/ChestCounter.Gui/Assets/token.ico");
-            res.set_manifest_file("src/app.manifest");
+            res.set_icon("../../src/ChestCounter.Gui/Assets/token.ico");
+            res.set_manifest_file("../../src/app.manifest");
             let _ = res.compile();
         }
     }

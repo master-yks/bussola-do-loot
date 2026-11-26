@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Compilar solução em Release
+        run: dotnet build src/ChestCounter.slnx -c Release
+
+      - name: Validar contagem e histórico
+        run: dotnet run --project tests/ChestCounter.Checks -c Release
+
+      - name: Validar planejamento de rotas
+        run: dotnet run --project tests/ChestCounter.MapChecks -c Release
