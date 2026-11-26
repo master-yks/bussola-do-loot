@@ -2,12 +2,12 @@ BÚSSOLA DO LOOT
 Tracker de baús do Fortnite para Windows x64
 Edição por master-yks
 
-1. Instalação recomendada: execute BussolaDoLoot-Setup-win-x64.exe e avance no
-   assistente. O instalador cria os atalhos e o desinstalador no Windows.
-   Na versão portátil (.zip), extraia os arquivos em uma pasta e abra
-   BussolaDoLoot.exe (executável único, já com o runtime .NET incluído).
+1. Instalação: execute BussolaDoLoot-Setup-win-x64.exe e avance no assistente.
+   O instalador já inclui o runtime .NET 10, cria os atalhos no Menu Iniciar
+   e na Área de Trabalho e registra o desinstalador no Windows.
 2. No Fortnite, ative a gravação de replays de Battle Royale. Conclua uma
-   partida pública de Battle Royale ou Construção Zero e clique em Sincronizar.
+   partida pública de Battle Royale ou Construção Zero e aguarde a
+   sincronização automática (ou clique em Sincronizar / pressione F5).
 3. Confira a Visão Geral e o Histórico. A contagem do esquadrão mostra o
    mínimo de aberturas que o seu replay conseguiu observar.
 4. Para estimar os baús durante a partida, deixe os avisos de EXP visíveis,
@@ -15,14 +15,16 @@ Edição por master-yks
 5. Para usar o contador no OBS, abra uma Fonte de navegador com o endereço
    http://localhost:7777/ e mantenha o aplicativo aberto.
 
+Atalhos rápidos no aplicativo:
+- Ctrl+1 a Ctrl+5: alterna entre as 5 abas
+- F5 ou Ctrl+R: sincroniza os replays agora
+- Ctrl+F: foca a busca no Histórico ou filtro de camadas no Mapa
+- Ctrl+Shift+O / L / M: mostra/oculta, trava cliques e troca estilo do HUD
+
 O mapa e o planejador de rotas também funcionam offline. Os dados pessoais
-ficam em %APPDATA%\ChestCounter. Exportações de histórico podem incluir
-nomes de colegas e identificadores de partidas.
+ficam em %APPDATA%\ChestCounter e são preservados entre atualizações.
+Exportações de histórico podem incluir nomes de colegas e IDs de partidas.
 
-Na versão portátil, execute Criar atalhos.cmd se quiser criar um atalho na
-Área de Trabalho. Para desinstalar a versão instalada, use "Aplicativos
-instalados" do Windows; na portátil, exclua a pasta extraída. O histórico
-permanece em %APPDATA%\ChestCounter para futuras instalações.
-
-As licenças de código e os avisos de terceiros acompanham esta distribuição
-na pasta licencas. Créditos das artes e do mapa estão em MANUAL.md.
+Para desinstalar, use "Aplicativos instalados" do Windows. As licenças de
+código e avisos de terceiros acompanham esta instalação na pasta licencas.
+Créditos das artes e do mapa estão em MANUAL.md.

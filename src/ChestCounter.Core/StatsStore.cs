@@ -74,7 +74,10 @@ public static class LiveSessionJournal
             try
             {
                 if (File.Exists(DefaultPath))
-                    return JsonSerializer.Deserialize<LiveSessionState>(File.ReadAllText(DefaultPath));
+                {
+                    using var fs = File.OpenRead(DefaultPath);
+                    return JsonSerializer.Deserialize<LiveSessionState>(fs);
+                }
             }
             catch { }
             return null;
@@ -344,7 +347,8 @@ public static class StatsStore
         {
             if (File.Exists(path))
             {
-                var stats = JsonSerializer.Deserialize<LifetimeStats>(File.ReadAllText(path)) ?? new();
+                using var fs = File.OpenRead(path);
+                var stats = JsonSerializer.Deserialize<LifetimeStats>(fs) ?? new();
                 if (stats.Version < LifetimeStats.CurrentVersion)
                 {
                     // Let the next parallel scan enrich replays still on disk (e.g. Playlist names)

@@ -32,7 +32,7 @@ jobs:
             choco install innosetup -y
           }
 
-      - name: Executar testes, gerar instalador e pacote portátil
+      - name: Executar testes e gerar instalador único
         shell: pwsh
         run: .\scripts\Publicar-Windows.ps1
 
@@ -44,5 +44,4 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/release/BussolaDoLoot-Setup-win-x64.exe
-            artifacts/release/BussolaDoLoot-Portable-win-x64.zip
             artifacts/release/SHA256SUMS.txt

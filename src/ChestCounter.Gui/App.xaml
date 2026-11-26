@@ -234,6 +234,10 @@
                                 <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource Gold}"/>
                                 <Setter TargetName="tick" Property="Visibility" Value="Visible"/>
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                <Setter TargetName="box" Property="BorderThickness" Value="1.8"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -259,6 +263,10 @@
                                         <ScaleTransform ScaleX="1.14" ScaleY="1.14"/>
                                     </Setter.Value>
                                 </Setter>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="ring" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                <Setter TargetName="ring" Property="BorderThickness" Value="2.2"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -319,26 +327,33 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Slider}">
-                        <Grid Height="20" VerticalAlignment="Center">
-                            <Border Height="5" CornerRadius="2.5" Background="#222738" BorderBrush="#323A52" BorderThickness="1" VerticalAlignment="Center"/>
-                            <Track x:Name="PART_Track">
-                                <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
-                                        <RepeatButton.Template>
-                                            <ControlTemplate TargetType="RepeatButton">
-                                                <Border Height="5" CornerRadius="2.5,0,0,2.5" Background="#99F5B942" VerticalAlignment="Center"/>
-                                            </ControlTemplate>
-                                        </RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.DecreaseRepeatButton>
-                                <Track.IncreaseRepeatButton>
-                                    <RepeatButton Style="{StaticResource SliderRepeatBtn}" Command="{x:Static Slider.IncreaseLarge}"/>
-                                </Track.IncreaseRepeatButton>
-                                <Track.Thumb>
-                                    <Thumb Style="{StaticResource SliderThumbStyle}"/>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
+                        <Border x:Name="focusFrame" CornerRadius="5" BorderThickness="1" BorderBrush="Transparent" Padding="2,0">
+                            <Grid Height="20" VerticalAlignment="Center">
+                                <Border Height="5" CornerRadius="2.5" Background="#222738" BorderBrush="#323A52" BorderThickness="1" VerticalAlignment="Center"/>
+                                <Track x:Name="PART_Track">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Border Height="5" CornerRadius="2.5,0,0,2.5" Background="#99F5B942" VerticalAlignment="Center"/>
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Style="{StaticResource SliderRepeatBtn}" Command="{x:Static Slider.IncreaseLarge}"/>
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource SliderThumbStyle}"/>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="focusFrame" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -364,6 +379,10 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="#20F5B942"/>
                                 <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                                <Setter TargetName="bd" Property="BorderThickness" Value="1.6"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -392,6 +411,9 @@
                                 <Setter TargetName="b" Property="Background" Value="{StaticResource CardHover}"/>
                                 <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource StrokeLit}"/>
                                 <Setter Property="Foreground" Value="{StaticResource Text}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Gold}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -422,6 +444,9 @@
                                 <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource GoldBorder}"/>
                                 <Setter Property="Foreground" Value="{StaticResource Gold}"/>
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -450,6 +475,10 @@
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="#E0A52E"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#FFFFFFFF"/>
+                                <Setter TargetName="bd" Property="BorderThickness" Value="1.8"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="bd" Property="Background" Value="{StaticResource CardAlt}"/>
@@ -485,10 +514,13 @@
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="{StaticResource CardAlt}"/>
                             </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Gold}"/>
+                            </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="bd" Property="Background" Value="#0B0D13"/>
                                 <Setter TargetName="bd" Property="BorderBrush" Value="#1B1F2B"/>
-                                <Setter Property="Foreground" Value="#555D70"/>
+                                <Setter Property="Foreground" Value="#7E8AA0"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

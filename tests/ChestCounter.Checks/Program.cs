@@ -227,3 +227,29 @@ try
     Check(migrated.Matches == 1 && migrated.ScannedFiles.Count == 0 && migrated.Version == LifetimeStats.CurrentVersion && migrated.Records[0].Unattributed == 2, "retains history and enables rescan");
 }
 finally { File.Delete(path); }
+
+int freePort;
+using (var probe = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0))
+{
+    probe.Start();
+    freePort = ((System.Net.IPEndPoint)probe.LocalEndpoint).Port;
+}
+using (var overlay = new OverlayServer(freePort)
+{
+    ConfigProvider = () => "{\"layout\":\"tactical\"}",
+    StatsBuilder = live => $"{{\"live\":{(live?.ToString() ?? "null")}}}",
+})
+{
+    overlay.Start();
+    using var http = new System.Net.Http.HttpClient();
+    string baseUrl = $"http://127.0.0.1:{freePort}";
+    var html = http.GetStringAsync($"{baseUrl}/").GetAwaiter().GetResult();
+    var cfg = http.GetStringAsync($"{baseUrl}/config.json").GetAwaiter().GetResult();
+    var png = http.GetByteArrayAsync($"{baseUrl}/chest.png").GetAwaiter().GetResult();
+    var post = http.PostAsync($"{baseUrl}/live?n=9", null).GetAwaiter().GetResult();
+    var st = http.GetStringAsync($"{baseUrl}/stats.json").GetAwaiter().GetResult();
+    var notFound = http.GetAsync($"{baseUrl}/missing").GetAwaiter().GetResult();
+    Check(html.Contains("Bússola do Loot") && cfg == "{\"layout\":\"tactical\"}" && png.Length > 100
+        && post.IsSuccessStatusCode && st == "{\"live\":9}" && (int)notFound.StatusCode == 404,
+        "local overlay HTTP server endpoints");
+}

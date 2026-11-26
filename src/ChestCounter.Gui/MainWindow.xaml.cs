@@ -77,9 +77,11 @@ public partial class MainWindow : Window
     private string _oddsCacheKey = "";
     private List<MatchHistoryRow> _allHistoryRows = new();
     private readonly Dictionary<string, RadioButton> _presetRadios = new(StringComparer.OrdinalIgnoreCase);
+    private bool _presetCardsBuilt;
     private bool _previewSimLive = true;
     private int _previewSimCount = 14;
     private int _previewBackdropIndex;
+    private (LifetimeStats? Stats, int? Live, string ThText, bool ThLive, OverlayStatsSnapshot Snap) _overlaySnapCache;
 
     // Cached chart data & non-thrashing hover overlay elements (O(1) updates, zero Children.Clear on MouseMove!)
     private List<MatchRecord> _chartBars = new();
@@ -119,7 +121,6 @@ public partial class MainWindow : Window
         ApplySmartInitialWindowBounds();
 
         PreviewHudView.IsPreview = true;
-        BuildPresetCardsUi();
         _previewBackdropIndex = Math.Clamp(_app.PreviewBackdropIndex, 0, 3);
         RestorePreviewBackdropRadio(_previewBackdropIndex);
         SyncOverlayControlsFromModel();
@@ -133,7 +134,6 @@ public partial class MainWindow : Window
         UpdateOverlayCoordsUi();
         _loadingSettings = false;
 
-        RefreshPreviewHud();
         FooterText.Text = ChestCounterService.Credits;
 
         if (!_isVerifyMode)
@@ -603,6 +603,7 @@ public partial class MainWindow : Window
 
         // Overlay Studio Tab (Sky + Default Fortnite Tactical)
         TabOverlay.IsChecked = true;
+        EnsurePresetCardsBuilt();
         ApplyOverlayPresetInternal(OverlayPresets.All[0], persist: false);
         SceneSkyRadio.IsChecked = true;
         UpdateLayout();
@@ -1002,15 +1003,6 @@ public partial class MainWindow : Window
 
     private OverlayStatsSnapshot BuildOverlayStatsSnapshot()
     {
-        var season = _stats.Over(ChestCounterService.SeasonStartUtc);
-        long seasonLive = season.YourChests + Math.Max(0, _liveCount ?? 0);
-        double tokenProb = TreasureCatalog.ChanceOfAtLeastOne(137_500, seasonLive);
-        string tokenStr = TreasureCatalog.FormatChance(tokenProb, highPrecision: true);
-
-        int? lastMatchYou = _stats.Records.Count > 0 ? _stats.Records[^1].You : null;
-        int best = _stats.Records.Count > 0 ? _stats.Records.Max(r => r.You) : 0;
-        double avg = season.Matches > 0 ? season.AvgYou : _stats.AvgYou;
-
         var now = DateTime.UtcNow;
         var hour = TreasureCatalog.CurrentOrNext(now);
         bool thLive = hour != null && TreasureCatalog.IsLive(hour, now);
@@ -1025,14 +1017,38 @@ public partial class MainWindow : Window
             thText = thLive ? $"★ {clock}" : clock;
         }
 
-        return new OverlayStatsSnapshot(avg, lastMatchYou, best, seasonLive, tokenStr, thText, thLive);
+        if (ReferenceEquals(_overlaySnapCache.Stats, _stats)
+            && _overlaySnapCache.Live == _liveCount
+            && _overlaySnapCache.ThLive == thLive
+            && _overlaySnapCache.ThText == thText)
+        {
+            return _overlaySnapCache.Snap;
+        }
+
+        var season = _stats.Over(ChestCounterService.SeasonStartUtc);
+        long seasonLive = season.YourChests + Math.Max(0, _liveCount ?? 0);
+        double tokenProb = TreasureCatalog.ChanceOfAtLeastOne(137_500, seasonLive);
+        string tokenStr = TreasureCatalog.FormatChance(tokenProb, highPrecision: true);
+
+        int? lastMatchYou = _stats.Records.Count > 0 ? _stats.Records[^1].You : null;
+        int best = 0;
+        foreach (var r in _stats.Records)
+            if (r.You > best) best = r.You;
+        double avg = season.Matches > 0 ? season.AvgYou : _stats.AvgYou;
+
+        var snap = new OverlayStatsSnapshot(avg, lastMatchYou, best, seasonLive, tokenStr, thText, thLive);
+        _overlaySnapCache = (_stats, _liveCount, thText, thLive, snap);
+        return snap;
     }
 
     private void PushInGameStats()
     {
+        bool needInGame = _inGame != null && _inGame.IsVisible;
+        bool needPreview = PreviewHudView != null && TabOverlay?.IsChecked == true;
+        if (!needInGame && !needPreview) return;
         var snap = BuildOverlayStatsSnapshot();
-        _inGame?.SetStats(snap);
-        PreviewHudView?.SetStats(snap);
+        if (needInGame) _inGame!.SetStats(snap);
+        if (needPreview) PreviewHudView!.SetStats(snap);
     }
 
     private void ToggleInGameFromHotkey() => SetInGameOverlay(!_app.InGameOverlay);
@@ -1112,6 +1128,18 @@ public partial class MainWindow : Window
     }
 
     // ==================== OVERLAY STUDIO CONTROLS & LIVE PREVIEW ====================
+
+    private void EnsurePresetCardsBuilt()
+    {
+        if (_presetCardsBuilt) return;
+        BuildPresetCardsUi();
+        _presetCardsBuilt = true;
+        bool prev = _loadingSettings;
+        _loadingSettings = true;
+        foreach (var kv in _presetRadios)
+            kv.Value.IsChecked = string.Equals(kv.Key, _overlay.PresetId, StringComparison.OrdinalIgnoreCase);
+        _loadingSettings = prev;
+    }
 
     private void BuildPresetCardsUi()
     {
@@ -1359,13 +1387,17 @@ public partial class MainWindow : Window
     private void RebuildPreviewSceneBackdrop()
     {
         if (PreviewViewportBorder == null) return;
+        if (TabOverlay?.IsChecked != true && !_isVerifyMode) return;
         string scene = _previewBackdropIndex switch { 1 => "snow", 2 => "island", 3 => "night", _ => "sky" };
         if (Equals(PreviewViewportBorder.Tag, scene)) return;
         var uri = new Uri($"pack://application:,,,/Assets/Studio/{scene}.jpg");
-        var background = new ImageBrush(new System.Windows.Media.Imaging.BitmapImage(uri))
-        {
-            Stretch = Stretch.UniformToFill
-        };
+        var bmp = new System.Windows.Media.Imaging.BitmapImage();
+        bmp.BeginInit();
+        bmp.UriSource = uri;
+        bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+        bmp.EndInit();
+        bmp.Freeze();
+        var background = new ImageBrush(bmp) { Stretch = Stretch.UniformToFill };
         background.Freeze();
         PreviewViewportBorder.Background = background;
         PreviewViewportBorder.Tag = scene;
@@ -1515,12 +1547,49 @@ public partial class MainWindow : Window
             else if (TabProbabilities.IsChecked == true) RenderProbabilityWorkspace();
             else if (TabOverlay.IsChecked == true)
             {
+                EnsurePresetCardsBuilt();
                 RebuildPreviewSceneBackdrop();
                 RefreshPreviewHud(allowPulse: false);
                 UpdateOverlayCoordsUi();
             }
             else if (TabHistory.IsChecked == true) UpdateDiagnosticsText();
         });
+    }
+
+    private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F5)
+        {
+            if (ScanButton.IsEnabled) _ = RunScanAsync(isAutoStartup: false);
+            e.Handled = true;
+            return;
+        }
+        if ((Keyboard.Modifiers & ModifierKeys.Control) == 0) return;
+
+        switch (e.Key)
+        {
+            case Key.D1: case Key.NumPad1: TabOverview.IsChecked = true; e.Handled = true; break;
+            case Key.D2: case Key.NumPad2: TabMap.IsChecked = true; e.Handled = true; break;
+            case Key.D3: case Key.NumPad3: TabProbabilities.IsChecked = true; e.Handled = true; break;
+            case Key.D4: case Key.NumPad4: TabOverlay.IsChecked = true; e.Handled = true; break;
+            case Key.D5: case Key.NumPad5: TabHistory.IsChecked = true; e.Handled = true; break;
+            case Key.R:
+                if (ScanButton.IsEnabled) _ = RunScanAsync(isAutoStartup: false);
+                e.Handled = true;
+                break;
+            case Key.F:
+                if (TabHistory.IsChecked == true)
+                {
+                    HistorySearchBox.Focus();
+                    e.Handled = true;
+                }
+                else if (TabMap.IsChecked == true && MapHost.Child is IslandPlanner planner)
+                {
+                    planner.LayerQuery.Focus();
+                    e.Handled = true;
+                }
+                break;
+        }
     }
 
     private void OpenProbabilitiesTab_Click(object sender, MouseButtonEventArgs e) =>
@@ -1783,7 +1852,8 @@ public partial class MainWindow : Window
         RenderMatchHistoryTable(recs);
         _oddsCacheKey = "";
         RenderTreasureHour();
-        RenderProbabilityWorkspace();
+        if (TabProbabilities.IsChecked == true || _isVerifyMode)
+            RenderProbabilityWorkspace();
         PushInGameStats();
     }
 

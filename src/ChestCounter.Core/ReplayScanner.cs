@@ -108,7 +108,7 @@ public sealed class ReplayScanner
 
         Parallel.For(0, toParse.Count, new ParallelOptions
         {
-            MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount / 2, 1, 4)
+            MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount - 1, 2, 6)
         }, idx =>
         {
             var work = toParse[idx];

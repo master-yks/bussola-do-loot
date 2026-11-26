@@ -14,7 +14,6 @@
   <!-- The replay parser is vendored (patched FortniteReplayDecompressor), see lib/README.md. -->
   <ItemGroup>
     <EmbeddedResource Include="../Assets/chest.png" LogicalName="ChestCounter.Chest.png" />
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\..\lib\FortniteReplayReader\FortniteReplayReader.csproj" />
   </ItemGroup>
 

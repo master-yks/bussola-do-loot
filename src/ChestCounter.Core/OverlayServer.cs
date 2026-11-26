@@ -1,15 +1,21 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 namespace ChestCounter;
 
-// Tiny local web server that serves a transparent stream overlay (add as a Browser Source in
-// OBS / Streamlabs) plus /stats.json and /config.json endpoints synced with the app customizer.
+// Lightweight local HTTP/1.1 server (zero ASP.NET Core / Kestrel dependency) that serves a
+// transparent stream overlay (OBS / Streamlabs Browser Source) plus /stats.json and /config.json.
 public sealed class OverlayServer : IDisposable
 {
-    private WebApplication? _app;
+    private static readonly byte[] HtmlBytes = Encoding.UTF8.GetBytes(Html);
+    private static readonly byte[] OkJsonBytes = "{\"ok\":true}"u8.ToArray();
+    private static readonly byte[] EmptyJsonBytes = "{}"u8.ToArray();
+    private static readonly Lazy<byte[]> ChestPngBytes = new(LoadChestPng);
+
+    private readonly List<TcpListener> _listeners = new();
+    private CancellationTokenSource? _cts;
+
     public volatile string StatsJson = "{}";
     public Func<int?, string>? StatsBuilder; // builds stats JSON given the live count (preferred)
     public Func<string>? ConfigProvider;     // returns full style/branding JSON, read fresh per request
@@ -27,87 +33,271 @@ public sealed class OverlayServer : IDisposable
         Port = port;
     }
 
+    private static byte[] LoadChestPng()
+    {
+        using var icon = typeof(OverlayServer).Assembly.GetManifestResourceStream("ChestCounter.Chest.png")!;
+        using var ms = new MemoryStream((int)icon.Length);
+        icon.CopyTo(ms);
+        return ms.ToArray();
+    }
+
     public void Start()
     {
-        var builder = WebApplication.CreateEmptyBuilder(new WebApplicationOptions());
-        builder.Logging.ClearProviders();
-        builder.WebHost.UseKestrelCore().ConfigureKestrel(options =>
-        {
-            options.AddServerHeader = false;
-            options.ListenLocalhost(Port);
-        });
-        var app = builder.Build();
-        app.Run(ctx =>
-        {
-            var request = ctx.Request;
-            var response = ctx.Response;
-            response.Headers.CacheControl = "no-store";
-            string host = request.Host.Host;
-            if (!host.Equals("localhost", StringComparison.OrdinalIgnoreCase) && host != "127.0.0.1" && host != "[::1]")
-            {
-                response.StatusCode = StatusCodes.Status400BadRequest;
-                return Task.CompletedTask;
-            }
-            var path = request.Path.Value;
-            if (path == "/live" && HttpMethods.IsPost(request.Method) && !request.Headers.ContainsKey("Origin"))
-            {
-                var n = request.Query["n"].ToString();
-                if (n.Length == 0) LiveCount = null;
-                else if (int.TryParse(n, out var count) && count >= 0) LiveCount = count;
-                else { response.StatusCode = 400; return Task.CompletedTask; }
-                response.ContentType = "application/json";
-                return response.WriteAsync("{\"ok\":true}");
-            }
-            if (!HttpMethods.IsGet(request.Method))
-            {
-                response.StatusCode = 405;
-                return Task.CompletedTask;
-            }
-            if (path == "/chest.png")
-            {
-                var icon = typeof(OverlayServer).Assembly.GetManifestResourceStream("ChestCounter.Chest.png")!;
-                response.RegisterForDispose(icon);
-                response.ContentType = "image/png";
-                response.ContentLength = icon.Length;
-                return icon.CopyToAsync(response.Body, ctx.RequestAborted);
-            }
-            response.ContentType = "application/json";
-            if (path == "/stats.json") return response.WriteAsync(StatsBuilder?.Invoke(LiveCount) ?? StatsJson);
-            if (path == "/config.json") return response.WriteAsync(ConfigProvider?.Invoke() ?? "{}");
-            if (path == "/")
-            {
-                response.ContentType = "text/html; charset=utf-8";
-                return response.WriteAsync(Html);
-            }
-            response.StatusCode = 404;
-            return Task.CompletedTask;
-        });
+        if (_cts != null) return;
+        var cts = new CancellationTokenSource();
+        var ipv4 = new TcpListener(IPAddress.Loopback, Port);
+        TcpListener? ipv6 = null;
+
         try
         {
-            app.StartAsync().GetAwaiter().GetResult();
-            _app = app;
+            ipv4.Start();
+            _listeners.Add(ipv4);
+
+            if (Socket.OSSupportsIPv6)
+            {
+                try
+                {
+                    ipv6 = new TcpListener(IPAddress.IPv6Loopback, Port);
+                    ipv6.Start();
+                    _listeners.Add(ipv6);
+                }
+                catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                {
+                    throw;
+                }
+                catch
+                {
+                    try { ipv6?.Stop(); } catch { }
+                }
+            }
+
+            _cts = cts;
+            foreach (var listener in _listeners)
+                _ = AcceptLoopAsync(listener, cts.Token);
         }
         catch
         {
-            try { app.DisposeAsync().AsTask().GetAwaiter().GetResult(); } catch { }
+            foreach (var listener in _listeners)
+            {
+                try { listener.Stop(); } catch { }
+            }
+            _listeners.Clear();
+            cts.Dispose();
             throw;
         }
     }
 
-    public void Dispose()
+    private async Task AcceptLoopAsync(TcpListener listener, CancellationToken ct)
     {
-        var app = Interlocked.Exchange(ref _app, null);
-        if (app == null) return;
-        _ = Task.Run(async () =>
+        while (!ct.IsCancellationRequested)
         {
+            TcpClient client;
             try
             {
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1.5));
-                await app.StopAsync(cts.Token).ConfigureAwait(false);
+                client = await listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) { break; }
+            catch (ObjectDisposedException) { break; }
+            catch (SocketException) { if (ct.IsCancellationRequested) break; continue; }
+
+            _ = HandleClientAsync(client, ct);
+        }
+    }
+
+    private async Task HandleClientAsync(TcpClient client, CancellationToken ct)
+    {
+        using (client)
+        {
+            client.NoDelay = true;
+            try
+            {
+                using var stream = client.GetStream();
+                using var reader = new StreamReader(stream, Encoding.ASCII, detectEncodingFromByteOrderMarks: false, bufferSize: 2048, leaveOpen: true);
+
+                while (!ct.IsCancellationRequested)
+                {
+                    string? requestLine;
+                    try
+                    {
+                        using var readTimeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                        readTimeout.CancelAfter(TimeSpan.FromSeconds(15));
+                        requestLine = await reader.ReadLineAsync(readTimeout.Token).ConfigureAwait(false);
+                    }
+                    catch { break; }
+
+                    if (string.IsNullOrEmpty(requestLine)) break;
+
+                    string? host = null;
+                    bool hasOrigin = false;
+                    bool closeRequested = false;
+                    int contentLength = 0;
+
+                    while (true)
+                    {
+                        string? header = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+                        if (string.IsNullOrEmpty(header)) break;
+
+                        int colon = header.IndexOf(':');
+                        if (colon <= 0) continue;
+                        var name = header.AsSpan(0, colon).Trim();
+                        var value = header.AsSpan(colon + 1).Trim();
+
+                        if (name.Equals("Host", StringComparison.OrdinalIgnoreCase))
+                            host = value.ToString();
+                        else if (name.Equals("Origin", StringComparison.OrdinalIgnoreCase))
+                            hasOrigin = true;
+                        else if (name.Equals("Connection", StringComparison.OrdinalIgnoreCase))
+                            closeRequested = value.Contains("close", StringComparison.OrdinalIgnoreCase);
+                        else if (name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase) && int.TryParse(value, out int len) && len > 0)
+                            contentLength = len;
+                    }
+
+                    if (contentLength > 0)
+                    {
+                        char[] discard = new char[Math.Min(contentLength, 4096)];
+                        int remaining = contentLength;
+                        while (remaining > 0)
+                        {
+                            int n = await reader.ReadAsync(discard.AsMemory(0, Math.Min(remaining, discard.Length)), ct).ConfigureAwait(false);
+                            if (n <= 0) break;
+                            remaining -= n;
+                        }
+                    }
+
+                    int sp1 = requestLine.IndexOf(' ');
+                    int sp2 = sp1 > 0 ? requestLine.IndexOf(' ', sp1 + 1) : -1;
+                    if (sp1 <= 0 || sp2 <= sp1 + 1)
+                    {
+                        await WriteResponseAsync(stream, 400, "text/plain; charset=utf-8", [], keepAlive: false, ct).ConfigureAwait(false);
+                        break;
+                    }
+
+                    string method = requestLine[..sp1];
+                    string target = requestLine[(sp1 + 1)..sp2];
+                    int qIdx = target.IndexOf('?');
+                    string path = qIdx >= 0 ? target[..qIdx] : target;
+                    string query = qIdx >= 0 ? target[(qIdx + 1)..] : "";
+
+                    bool keepAlive = !closeRequested && requestLine.EndsWith("HTTP/1.1", StringComparison.OrdinalIgnoreCase);
+
+                    if (!IsLocalHostHeader(host))
+                    {
+                        await WriteResponseAsync(stream, 400, "text/plain; charset=utf-8", [], keepAlive: false, ct).ConfigureAwait(false);
+                        break;
+                    }
+
+                    if (path == "/live" && method.Equals("POST", StringComparison.OrdinalIgnoreCase) && !hasOrigin)
+                    {
+                        string? nParam = TryGetQueryParam(query, "n");
+                        if (string.IsNullOrEmpty(nParam)) LiveCount = null;
+                        else if (int.TryParse(nParam, out var count) && count >= 0) LiveCount = count;
+                        else
+                        {
+                            await WriteResponseAsync(stream, 400, "application/json", [], keepAlive, ct).ConfigureAwait(false);
+                            if (!keepAlive) break;
+                            continue;
+                        }
+                        await WriteResponseAsync(stream, 200, "application/json", OkJsonBytes, keepAlive, ct).ConfigureAwait(false);
+                    }
+                    else if (!method.Equals("GET", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await WriteResponseAsync(stream, 405, "text/plain; charset=utf-8", [], keepAlive, ct).ConfigureAwait(false);
+                    }
+                    else if (path == "/chest.png")
+                    {
+                        await WriteResponseAsync(stream, 200, "image/png", ChestPngBytes.Value, keepAlive, ct).ConfigureAwait(false);
+                    }
+                    else if (path == "/stats.json")
+                    {
+                        string json = StatsBuilder?.Invoke(LiveCount) ?? StatsJson;
+                        await WriteResponseAsync(stream, 200, "application/json; charset=utf-8", Encoding.UTF8.GetBytes(json), keepAlive, ct).ConfigureAwait(false);
+                    }
+                    else if (path == "/config.json")
+                    {
+                        string json = ConfigProvider?.Invoke() ?? "{}";
+                        byte[] bytes = json == "{}" ? EmptyJsonBytes : Encoding.UTF8.GetBytes(json);
+                        await WriteResponseAsync(stream, 200, "application/json; charset=utf-8", bytes, keepAlive, ct).ConfigureAwait(false);
+                    }
+                    else if (path == "/")
+                    {
+                        await WriteResponseAsync(stream, 200, "text/html; charset=utf-8", HtmlBytes, keepAlive, ct).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await WriteResponseAsync(stream, 404, "text/plain; charset=utf-8", [], keepAlive, ct).ConfigureAwait(false);
+                    }
+
+                    if (!keepAlive) break;
+                }
             }
             catch { }
-            try { await app.DisposeAsync().ConfigureAwait(false); } catch { }
-        });
+        }
+    }
+
+    private static bool IsLocalHostHeader(string? host)
+    {
+        if (string.IsNullOrWhiteSpace(host)) return false;
+        string name = host.Trim();
+        if (name.StartsWith('['))
+        {
+            int end = name.IndexOf(']');
+            if (end < 0) return false;
+            name = name[..(end + 1)];
+            return name == "[::1]";
+        }
+        int colon = name.IndexOf(':');
+        if (colon >= 0) name = name[..colon];
+        return name.Equals("localhost", StringComparison.OrdinalIgnoreCase) || name == "127.0.0.1";
+    }
+
+    private static string? TryGetQueryParam(string query, string key)
+    {
+        if (string.IsNullOrEmpty(query)) return null;
+        foreach (var part in query.Split('&'))
+        {
+            int eq = part.IndexOf('=');
+            var k = eq >= 0 ? part[..eq] : part;
+            if (k.Equals(key, StringComparison.Ordinal))
+                return eq >= 0 ? Uri.UnescapeDataString(part[(eq + 1)..]) : "";
+        }
+        return null;
+    }
+
+    private static async Task WriteResponseAsync(
+        NetworkStream stream, int status, string contentType, byte[] body, bool keepAlive, CancellationToken ct)
+    {
+        string reason = status switch
+        {
+            200 => "OK",
+            400 => "Bad Request",
+            404 => "Not Found",
+            405 => "Method Not Allowed",
+            _ => "Error",
+        };
+        string headers =
+            $"HTTP/1.1 {status} {reason}\r\n" +
+            $"Content-Type: {contentType}\r\n" +
+            $"Content-Length: {body.Length}\r\n" +
+            "Cache-Control: no-store\r\n" +
+            $"Connection: {(keepAlive ? "keep-alive" : "close")}\r\n\r\n";
+
+        byte[] headerBytes = Encoding.ASCII.GetBytes(headers);
+        await stream.WriteAsync(headerBytes, ct).ConfigureAwait(false);
+        if (body.Length > 0)
+            await stream.WriteAsync(body, ct).ConfigureAwait(false);
+    }
+
+    public void Dispose()
+    {
+        var cts = Interlocked.Exchange(ref _cts, null);
+        if (cts == null) return;
+        try { cts.Cancel(); } catch { }
+        foreach (var listener in _listeners)
+        {
+            try { listener.Stop(); } catch { }
+        }
+        _listeners.Clear();
+        cts.Dispose();
     }
 
     private const string Html = """

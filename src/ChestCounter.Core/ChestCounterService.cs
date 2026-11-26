@@ -94,8 +94,10 @@ public static class ChestCounterService
         if (!Directory.Exists(demos)) return new();
         try
         {
-            return Directory.GetFiles(demos, "*.replay")
-                .OrderByDescending(f => new FileInfo(f).LastWriteTimeUtc).ToList();
+            return new DirectoryInfo(demos).EnumerateFiles("*.replay")
+                .OrderByDescending(static f => f.LastWriteTimeUtc)
+                .Select(static f => f.FullName)
+                .ToList();
         }
         catch
         {
